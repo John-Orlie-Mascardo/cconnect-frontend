@@ -25,7 +25,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_formKey.currentState?.validate() ?? false) {
       // Placeholder: registration logic would go here.
       // For now navigate to home.
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/');
     }
   }
 

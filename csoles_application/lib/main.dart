@@ -3,7 +3,9 @@ import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/home_screen.dart';
 
-void main() => runApp(const MyApp());
+void main() {
+  runApp(const MyApp());
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -13,6 +15,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Simple Auth App',
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        useMaterial3: true,
+      ),
       initialRoute: '/',
       routes: {
         '/': (context) => const LoginScreen(),
