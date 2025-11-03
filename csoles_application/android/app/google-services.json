@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "855625311911",
+    "project_id": "csoles-connect",
+    "storage_bucket": "csoles-connect.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:855625311911:android:068caa5a8a7337df6c5d82",
+        "android_client_info": {
+          "package_name": "com.example.csoles_application"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJueUP5IJW_Fqq7TwyvxKDf4Mykp7gYh8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:855625311911:android:085aa43ddbff07106c5d82",
+        "android_client_info": {
+          "package_name": "com.example.csolesconnect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJueUP5IJW_Fqq7TwyvxKDf4Mykp7gYh8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

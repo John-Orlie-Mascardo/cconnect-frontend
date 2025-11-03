@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -12,6 +15,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -21,12 +25,61 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _submit() {
-    if (_formKey.currentState?.validate() ?? false) {
-      // Placeholder: registration logic would go here.
-      // For now navigate to home.
-      Navigator.pushReplacementNamed(context, '/');
+  Future<void> _submit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    final email = _emailCtrl.text.trim();
+    final password = _passwordCtrl.text.trim();
+
+    setState(() => _isLoading = true);
+
+    try {
+      // ✅ Step 1: Register with Firebase Auth
+      UserCredential userCred = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
+
+      // ✅ Step 2: Get Firebase ID token
+      final token = await userCred.user?.getIdToken();
+
+      print('🔥 Firebase ID Token: $token'); // 👈 Copy this for Bruno testing if needed
+
+      // ✅ Step 3: Send token to backend (MongoDB registration)
+      final res = await http.post(
+        Uri.parse('http://localhost:3000/api/user/register'), // Android Emulator
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({}), // not needed, but harmless
+      );
+
+      print('📡 Backend response: ${res.body}'); // 👈 Debug log
+
+      if (res.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ Registered successfully!')),
+        );
+        Navigator.pushReplacementNamed(context, '/');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('⚠️ Backend error: ${res.body}')),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Firebase Auth Error: ${e.message}')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unexpected error: $e')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
     }
+
+    print('🚀 Submit button pressed');
+
   }
 
   @override
@@ -38,6 +91,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextFormField(
                 controller: _emailCtrl,
@@ -71,12 +125,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: _submit,
-                child: const Text('Register'),
+                onPressed: _isLoading ? null : _submit,
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Register'),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: const Text('Back to login'),
