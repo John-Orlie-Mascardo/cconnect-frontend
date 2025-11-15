@@ -25,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _selectedIndex = index);
     // handle navigation: 0 -> home, 1 -> cart, 2 -> profile (expand as needed)
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
@@ -37,7 +37,10 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             // Top icons + logo row
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 12.0,
+              ),
               child: Row(
                 children: [
                   Row(
@@ -48,31 +51,42 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   const Spacer(),
-                  // Logo placeholder: replace with Image.asset or Image.network
-                  Container(
-                    width: 56,
-                    height: 40,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[700],
-                      borderRadius: BorderRadius.circular(4),
+                  // Logo from assets
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: Image.asset(
+                      'assets/images/logo.jpg', // Logo directory
+                      width: 56,
+                      height: 40,
+                      fit: BoxFit.cover,
                     ),
-                    child: const Text('logo', style: TextStyle(color: Colors.white)),
                   ),
                 ],
               ),
             ),
 
             // Hero area (image or video goes here)
-            Container(
+            SizedBox(
+              // change to size box and removed container
               width: double.infinity,
               height: height * 0.33, // ~1/3 of screen height; adjust as needed
-              color: Colors.grey[600],
-              child: const Center(
-                child: Text(
-                  'video/pic showcasing\n   goods',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white, fontSize: 18),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: Image.asset(
+                  'assets/images/feature_test.jpg',
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: Colors.grey[600],
+                    child: const Center(
+                      child: Text(
+                        'video/pic showcasing\n   goods',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white, fontSize: 18),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -93,7 +107,10 @@ class _HomeScreenState extends State<HomeScreen> {
             // Product grid
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 14.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12.0,
+                  vertical: 14.0,
+                ),
                 child: GridView.builder(
                   itemCount: demoProducts.length,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -122,9 +139,18 @@ class _HomeScreenState extends State<HomeScreen> {
         currentIndex: _selectedIndex,
         onTap: _onNavTap,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_outlined), label: 'Cart'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Me'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart_outlined),
+            label: 'Cart',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: 'Me',
+          ),
         ],
       ),
     );
@@ -170,13 +196,17 @@ class ProductCard extends StatelessWidget {
                       child: Image.network(
                         imageUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image)),
+                        errorBuilder: (_, __, ___) =>
+                            const Center(child: Icon(Icons.broken_image)),
                       ),
                     ),
             ),
           ),
           const SizedBox(height: 8),
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
           Text(price, style: const TextStyle(fontSize: 14)),
         ],
       ),
