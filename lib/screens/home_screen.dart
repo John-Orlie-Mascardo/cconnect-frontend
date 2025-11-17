@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -10,6 +9,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+
+  // Key so we can open the drawer from the custom top bar
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   // Demo product data — replace with your real model or API data
   final List<Map<String, String?>> demoProducts = List.generate(
@@ -24,7 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onNavTap(int index) {
     setState(() => _selectedIndex = index);
-    // handle navigation: 0 -> home, 1 -> cart, 2 -> profile (expand as needed)
+    // handle navigation here: 0 -> home, 1 -> cart, 2 -> profile, etc
   }
 
   @override
@@ -32,12 +34,41 @@ class _HomeScreenState extends State<HomeScreen> {
     final height = MediaQuery.of(context).size.height;
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: Colors.black,
-      appBar: null,
+      appBar: null, // we are using a custom top bar
+
+      // ⬅️ Drawer that appears when hamburger is tapped
+      drawer: Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          const DrawerHeader(
+            decoration: BoxDecoration(color: Colors.black),
+            child: SizedBox(), // empty header, clean look
+          ),
+
+          // Notification tile
+          const ListTile(
+            leading: Icon(Icons.notifications_none),
+            title: Text("Notifications"),
+          ),
+
+          // Chatbox tile
+          const ListTile(
+            leading: Icon(Icons.chat_bubble_outline),
+            title: Text("Messages"),
+          ),
+        ],
+      ),
+    ),
+
+
+      // MAIN BODY
       body: SafeArea(
         child: Column(
           children: [
-            // 🔝 Top bar (fixed, not scrollable)
+            // ⬆️ Custom top bar (fixed)
             Container(
               color: Colors.black,
               child: Padding(
@@ -47,15 +78,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: Row(
                   children: [
-                    Row(
-                      children: const [
-                        Icon(Icons.notifications_none, size: 28, color: Colors.white,), //notification icon
-                        SizedBox(width: 12),
-                        Icon(Icons.chat_bubble_outline, size: 24, color: Colors.white,), //chat bubble
-                      ],
+                    // Hamburger / menu button
+                    IconButton(
+                      icon: const Icon(
+                        Icons.menu,
+                        size: 28,
+                        color: Colors.white,
+                      ),
+                      onPressed: () {
+                        _scaffoldKey.currentState?.openDrawer();
+                      },
                     ),
+
                     const Spacer(),
-                    // Logo
+
+                    // Logo only (notifications/chat moved into drawer)
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
                       child: Image.asset(
@@ -76,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    // Hero area (advertising image/s or video goes here)
+                    // Hero area (advertising image / video)
                     SizedBox(
                       width: double.infinity,
                       height: height * 0.33,
@@ -88,7 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           width: double.infinity,
                           height: double.infinity,
                           errorBuilder: (_, __, ___) => Container(
-                            color: Colors.grey[600],
+                            color: Colors.grey,
                             child: const Center(
                               child: Text(
                                 'video/pic showcasing\n   goods',
@@ -121,14 +158,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
 
-                    // Product grid (now part of overall scroll)
+                    // Product grid (part of scroll)
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12.0,
                         vertical: 14.0,
                       ),
                       child: GridView.builder(
-                        // 👇 important so it works inside SingleChildScrollView
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: demoProducts.length,
@@ -157,24 +193,25 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
 
-      // 🔻 Bottom bar (fixed, not scrollable)
+      // 🔻 Bottom bar (fixed)
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.black,
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.white,     
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white70,
         currentIndex: _selectedIndex,
         onTap: _onNavTap,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined, color: Colors.white,),
+            icon: Icon(Icons.home_outlined, color: Colors.white),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart_outlined, color: Colors.white,),
+            icon: Icon(Icons.shopping_cart_outlined, color: Colors.white),
             label: 'Cart',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline,  color: Colors.white,),
+            icon: Icon(Icons.person_outline, color: Colors.white),
             label: 'Me',
           ),
         ],
@@ -201,7 +238,7 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap, // keep or remove depending if you want tap later
+      onTap: onTap,
       borderRadius: BorderRadius.circular(6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,11 +248,16 @@ class ProductCard extends StatelessWidget {
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: Colors.grey[800],
                 borderRadius: BorderRadius.circular(6),
               ),
               child: imageUrl == null
-                  ? const Center(child: Text('pic'))
+                  ? const Center(
+                      child: Text(
+                        'pic',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    )
                   : ClipRRect(
                       borderRadius: BorderRadius.circular(6),
                       child: Image.network(
@@ -236,10 +278,13 @@ class ProductCard extends StatelessWidget {
               color: Colors.white,
             ),
           ),
-          Text(
-            price,
-            style: TextStyle(fontSize: 14,
-             color: Colors.white70),
+          const Text(
+            // price text
+            '₱69,420', // you can also use the price variable here if not hardcoded
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white70,
+            ),
           ),
         ],
       ),
