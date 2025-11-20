@@ -1,31 +1,23 @@
 import 'package:flutter/material.dart';
-import 'dart:async'; // for timer
+import 'dart:async';
+import 'cart_screen.dart';
+import 'me_screen.dart';
+import 'notifications_screen.dart';
+import 'chats_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState(); //
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0; // current index of bottom nav bar
-  int _currentHeroIndex =
-      0; // current index of hero area (if carousel is implemented)
+  int _currentHeroIndex = 0; // current index of hero area
 
   // key so we can open the drawer from the custom top bar
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
-  // ORIGINAL PRODUCT MAP DATA
-  // demo product data — replace with your real model or API data
-  // final List<Map<String, String?>> demoProducts = List.generate(
-  //   6,
-  //   (i) => {
-  //     'title': 'Joshua Shoes',
-  //     'price': '₱69,420',
-  //     'image': 'assets/images/nike_test.jpg', // replace with real image paths
-  //   },
-  // );
 
   // manual demo products with different names and prices for demo purposes
   final List<Map<String, String?>> demoProducts = [
@@ -62,7 +54,6 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   final List<String> _heroImages = [
-    // hard coded paths for hero area
     'assets/images/feature_test.jpg',
     'assets/images/feature_test2.jpg',
     'assets/images/feature_test3.jpg',
@@ -70,12 +61,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onNavTap(int index) {
     setState(() => _selectedIndex = index);
-    // handle navigation here: 0 -> home, 1 -> cart, 2 -> profile, etc
+
+    if (index == 1) {
+      // Cart Screen
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const CartScreen()),
+      );
+    } else if (index == 2) {
+      // Me Screen
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const MeScreen()),
+      );
+    }
+    // index 0 = Home, do nothing (already here)
   }
 
-  Timer? _heroTimer; // timer for changing hero area image
+  Timer? _heroTimer;
 
-  // setups start timer method
   @override
   void initState() {
     super.initState();
@@ -83,14 +85,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _startHeroTimer() {
-    _heroTimer = Timer.periodic(Duration(seconds: 5), (timer) {
+    _heroTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
       setState(() {
         _currentHeroIndex = (_currentHeroIndex + 1) % _heroImages.length;
       });
     });
   }
 
-  // disposes timer when not needed to avoid memory leaks
   @override
   void dispose() {
     _heroTimer?.cancel();
@@ -103,48 +104,54 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: Colors.black, // scaffold background color
-      appBar: null, // we are using a custom top bar
-      // drawer that appears when hamburger is tapped
+      backgroundColor: Colors.black,
+      appBar: null,
+
+      // ─── DRAWER ───────────────────────────────────────────────
       drawer: Drawer(
         backgroundColor: const Color(0xFF000000),
-        // drawer background color
         child: ListView(
-          // creates a child in drawer called listview so it can contain many children
           padding: EdgeInsets.zero,
           children: [
             Container(
-              // top of drawer with back button
               height: 60,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Color(0xFFEDFF00),
-              ), // top box decoration
+              ),
               child: Row(
                 children: [
                   IconButton(
                     icon: const Icon(
-                      // back arrow
                       Icons.arrow_back,
-                      color: Color.fromARGB(255, 0, 0, 0),
-                    ), // back arrow icon
+                      color: Colors.black,
+                    ),
                     splashColor: Colors.white24,
                     highlightColor: Colors.white12,
                     onPressed: () {
-                      Navigator.of(context).pop();
+                      Navigator.of(context).pop(); // close drawer
                     },
                   ),
-                  Text(
+                  const Text(
                     'Csoles Connect',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.black,
+                    ),
                   ),
                 ],
               ),
             ),
 
-            // notification tile
+            // Notifications tile  -> NotificationScreen
             InkWell(
               onTap: () {
-                print("Pressed notifications!");
+                Navigator.of(context).pop(); // close drawer first
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const NotificationScreen(),
+                  ),
+                );
               },
               child: const ListTile(
                 leading: Icon(Icons.notifications_none, color: Colors.white),
@@ -155,20 +162,30 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // chatbox tile
+            // Chatbox tile  -> ChatsScreen
             InkWell(
               onTap: () {
-                print("Pressed the chatbox!"); // temp function
+                Navigator.of(context).pop(); // close drawer first
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ChatsScreen(),
+                  ),
+                );
               },
               child: const ListTile(
                 leading: Icon(Icons.chat_bubble_outline, color: Colors.white),
-                title: Text("Messages", style: TextStyle(color: Colors.white)),
+                title: Text(
+                  "Messages",
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
             ),
-            // log out, Log in, Register
+
+            // Log out (still placeholder)
             InkWell(
               onTap: () {
-                print("Pressed the Log out!"); // temp function
+                // TODO: implement logout
+                debugPrint("Pressed the Log out!");
               },
               child: const ListTile(
                 leading: Icon(Icons.logout, color: Colors.white),
@@ -179,11 +196,11 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
 
-      // MAIN BODY
+      // ─── BODY ───────────────────────────────────────────────
       body: SafeArea(
         child: Column(
           children: [
-            // custom top bar (fixed)
+            // custom top bar
             Container(
               color: Colors.black,
               child: Padding(
@@ -193,7 +210,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: Row(
                   children: [
-                    // Hamburger / menu button
                     IconButton(
                       splashColor: Colors.white24,
                       highlightColor: Colors.white12,
@@ -206,14 +222,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         _scaffoldKey.currentState?.openDrawer();
                       },
                     ),
-
                     const Spacer(),
-
-                    // Logo only (notifications/chat moved into drawer)
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
                       child: Image.asset(
-                        'assets/images/logo.png', // Logo directory
+                        'assets/images/logo.png',
                         width: 56,
                         height: 40,
                         fit: BoxFit.cover,
@@ -225,22 +238,19 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // Main content
+            // main content
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    // hero area (advertising image / video)
+                    // hero area
                     SizedBox(
                       width: double.infinity,
                       height: height * 0.33,
                       child: AnimatedSwitcher(
-                        // for smooth transitions
                         duration: const Duration(milliseconds: 1000),
                         child: ClipRRect(
-                          key: ValueKey(
-                            _currentHeroIndex,
-                          ), // key for AnimatedSwitcher to know when the child changes
+                          key: ValueKey(_currentHeroIndex),
                           borderRadius: BorderRadius.circular(6),
                           child: Image.asset(
                             _heroImages[_currentHeroIndex],
@@ -265,11 +275,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
 
-                    // Breakpoint slogan band
+                    // slogan band
                     Container(
-                      color: Color(
-                        0xFF0000FF,
-                      ), // break point color, blue else you can change to 0xFFEDFF00, yellow
+                      color: const Color(0xFF0000FF),
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       child: const Center(
@@ -284,7 +292,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
 
-                    // Product grid (part of scroll)
+                    // product grid
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12.0,
@@ -296,11 +304,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         itemCount: demoProducts.length,
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 20,
-                              childAspectRatio: 0.72,
-                            ),
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 20,
+                          childAspectRatio: 0.72,
+                        ),
                         itemBuilder: (context, index) {
                           final product = demoProducts[index];
                           return ProductCard(
@@ -319,7 +327,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
 
-      // 🔻 Bottom bar (fixed)
+      // ─── BOTTOM NAV ─────────────────────────────────────────
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.black,
         type: BottomNavigationBarType.fixed,
@@ -369,7 +377,6 @@ class ProductCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image placeholder
           Expanded(
             child: Container(
               width: double.infinity,
@@ -382,20 +389,17 @@ class ProductCard extends StatelessWidget {
                       child: Text('pic', style: TextStyle(color: Colors.white)),
                     )
                   : ClipRRect(
-                      // image with rounded corners
                       borderRadius: BorderRadius.circular(6),
-                      child: Image.network(
+                      child: Image.asset(
                         imageUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            const Center(child: Icon(Icons.broken_image)),
                       ),
                     ),
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            title, // title text
+            title,
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,
@@ -403,9 +407,8 @@ class ProductCard extends StatelessWidget {
             ),
           ),
           Text(
-            // price text
             price,
-            style: TextStyle(fontSize: 14, color: Colors.white70),
+            style: const TextStyle(fontSize: 14, color: Colors.white70),
           ),
         ],
       ),
