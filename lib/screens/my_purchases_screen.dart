@@ -7,6 +7,7 @@ class MyPurchasesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Mock Data: List of completed purchase items to populate the grid
     final completedProducts = [
       {'name': 'Joshua Shoes', 'price': '₱69,420'},
       {'name': 'Joshua Lebron Shoes', 'price': '₱420.69'},
@@ -15,16 +16,16 @@ class MyPurchasesScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.black, // Dark theme background
       body: SafeArea(
         child: Column(
           children: [
-            // ─── TOP BAR ────────────────────────────────────────────────
+            // ─── HEADER SECTION ────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  // Back Button
+                  // Back Button: Returns to the 'Me' profile screen
                   InkWell(
                     onTap: () => Navigator.pop(context),
                     borderRadius: BorderRadius.circular(40),
@@ -45,9 +46,11 @@ class MyPurchasesScreen extends StatelessWidget {
 
                   const SizedBox(width: 16),
 
+                  // Screen Title
                   const Text(
                     'My Purchases',
                     style: TextStyle(
+                      fontFamily: 'kobe11',
                       fontSize: 30,
                       fontWeight: FontWeight.w500,
                       letterSpacing: 1.2,
@@ -57,7 +60,9 @@ class MyPurchasesScreen extends StatelessWidget {
 
                   const Spacer(),
 
-                  // NOTIFICATION BUTTON → NotificationScreen()
+                  // Action Buttons: Quick access to secondary features
+
+                  // 1. Notifications Button
                   InkWell(
                     onTap: () {
                       Navigator.push(
@@ -76,14 +81,12 @@ class MyPurchasesScreen extends StatelessWidget {
 
                   const SizedBox(width: 8),
 
-                  // CHAT BUTTON → ChatsScreen()
+                  // 2. Chat Button
                   InkWell(
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => const ChatsScreen(),
-                        ),
+                        MaterialPageRoute(builder: (_) => const ChatsScreen()),
                       );
                     },
                     child: const Icon(
@@ -96,27 +99,46 @@ class MyPurchasesScreen extends StatelessWidget {
               ),
             ),
 
-            // ─── TABS ────────────────────────────────────────────────
+            // ─── ORDER STATUS TABS ─────────────────────────────────────────────
+            // Static headers indicating different stages of order processing
             Container(
               color: Colors.black,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('To Pay',
-                      style: TextStyle(fontSize: 20, color: Colors.white)),
-                  Text('To Ship',
-                      style: TextStyle(fontSize: 20, color: Colors.white)),
-                  Text('To Receive',
-                      style: TextStyle(fontSize: 20, color: Colors.white)),
+                  Text(
+                    'To Pay',
+                    style: TextStyle(
+                      fontFamily: 'kobe11',
+                      fontSize: 20,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    'To Ship',
+                    style: TextStyle(
+                      fontFamily: 'kobe11',
+                      fontSize: 20,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    'To Receive',
+                    style: TextStyle(
+                      fontFamily: 'kobe11',
+                      fontSize: 20,
+                      color: Colors.white,
+                    ),
+                  ),
                 ],
               ),
             ),
 
             const SizedBox(height: 24),
 
-            // ─── EMPTY ORDERS CIRCLE ─────────────────────────────────────
+            // ─── EMPTY STATE INDICATOR ─────────────────────────────────────────
+            // visual placeholder showing no active orders in the above categories
             Container(
               width: 260,
               height: 260,
@@ -127,13 +149,17 @@ class MyPurchasesScreen extends StatelessWidget {
               alignment: Alignment.center,
               child: const Text(
                 'no orders yet',
-                style: TextStyle(fontSize: 22, color: Colors.white70),
+                style: TextStyle(
+                  fontFamily: 'kobe11',
+                  fontSize: 22,
+                  color: Colors.white70,
+                ),
               ),
             ),
 
             const SizedBox(height: 32),
 
-            // ─── COMPLETED HEADER ─────────────────────────────────────
+            // ─── SECTION HEADER: COMPLETED ORDERS ──────────────────────────────
             Container(
               width: double.infinity,
               height: 56,
@@ -142,6 +168,7 @@ class MyPurchasesScreen extends StatelessWidget {
               child: const Text(
                 'COMPLETED',
                 style: TextStyle(
+                  fontFamily: 'kobe11',
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.5,
@@ -150,20 +177,23 @@ class MyPurchasesScreen extends StatelessWidget {
               ),
             ),
 
-            // ─── COMPLETED GRID ───────────────────────────────────────
+            // ─── PRODUCT GRID ──────────────────────────────────────────────────
+            // Scrollable grid displaying past purchased items
             Expanded(
               child: SingleChildScrollView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 24,
+                ),
                 child: GridView.builder(
                   shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  physics:
+                      const NeverScrollableScrollPhysics(), // Scrolling handled by parent SingleChildScrollView
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     mainAxisSpacing: 24,
                     crossAxisSpacing: 24,
-                    childAspectRatio: 0.60,
+                    childAspectRatio: 0.60, // Adjusts height relative to width
                   ),
                   itemCount: completedProducts.length,
                   itemBuilder: (context, index) {
@@ -171,6 +201,7 @@ class MyPurchasesScreen extends StatelessWidget {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Product Image Placeholder
                         Expanded(
                           child: Container(
                             width: double.infinity,
@@ -179,22 +210,31 @@ class MyPurchasesScreen extends StatelessWidget {
                             child: const Text(
                               'pic',
                               style: TextStyle(
-                                  fontSize: 20, color: Colors.white70),
+                                fontFamily: 'kobe11',
+                                fontSize: 20,
+                                color: Colors.white70,
+                              ),
                             ),
                           ),
                         ),
                         const SizedBox(height: 8),
+
+                        // Product Name
                         Text(
                           item['name']!,
                           style: const TextStyle(
+                            fontFamily: 'kobe11',
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
                           ),
                         ),
+
+                        // Product Price
                         Text(
                           item['price']!,
                           style: const TextStyle(
+                            fontFamily: 'kobe11',
                             fontSize: 18,
                             color: Colors.white70,
                           ),

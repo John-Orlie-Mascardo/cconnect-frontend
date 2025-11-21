@@ -11,6 +11,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  // Form and Controller Initialization
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
@@ -18,33 +19,41 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
+    // Clean up controllers to free resources
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     super.dispose();
   }
 
+  // ─── AUTHENTICATION LOGIC ──────────────────────────────────────────────────
   Future<void> _login() async {
+    // Input Validation: Ensure email and password fields are valid before proceeding
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final email = _emailCtrl.text.trim();
     final password = _passwordCtrl.text.trim();
 
     setState(() => _isLoading = true);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Logging in...')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Logging in...')));
 
     try {
-      // Step 1: Sign in using Firebase Auth
+      // Step 1: Firebase Authentication
+      // Authenticate the user directly with Firebase to verify credentials
       UserCredential userCred = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
 
-      // Step 2: Get Firebase ID token
+      // Step 2: Token Retrieval
+      // Get the secure ID token from the authenticated Firebase user
       final token = await userCred.user?.getIdToken();
 
-      // Step 3: Send token to backend for validation
+      // Step 3: Backend Verification
+      // Send the token to the custom backend API to create a session or verify user role
       final res = await http.post(
-        Uri.parse('http://localhost:3000/api/user/login'), // use localhost:3000 if on web
+        Uri.parse(
+          'http://localhost:3000/api/user/login',
+        ), // Note: Use 10.0.2.2 for Android emulator
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -52,10 +61,11 @@ class _LoginScreenState extends State<LoginScreen> {
         body: jsonEncode({}),
       );
 
+      // Response Handling
       if (res.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Login successful!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('✅ Login successful!')));
         Navigator.pushReplacementNamed(context, '/home');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -63,14 +73,17 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Firebase error: ${e.message}')),
-      );
+      // Firebase specific errors (e.g., wrong password, user not found)
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Firebase error: ${e.message}')));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unexpected error: $e')),
-      );
+      // General errors (e.g., network issues)
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Unexpected error: $e')));
     } finally {
+      // Reset loading state regardless of outcome
       setState(() => _isLoading = false);
     }
   }
@@ -79,6 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Login')),
+      // Main Layout: Wrapper with padding to ensure content isn't against the edges
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -86,6 +100,9 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // ─── INPUT FIELDS ─────────────────────────────────────────────
+
+              // Email Input
               TextFormField(
                 controller: _emailCtrl,
                 keyboardType: TextInputType.emailAddress,
@@ -97,6 +114,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 },
               ),
               const SizedBox(height: 12),
+
+              // Password Input
               TextFormField(
                 controller: _passwordCtrl,
                 obscureText: true,
@@ -105,6 +124,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     v == null || v.isEmpty ? 'Enter password' : null,
               ),
               const SizedBox(height: 24),
+
+              // ─── ACTION BUTTONS ───────────────────────────────────────────
+
+              // Login Button: Triggers the auth flow or shows a loader
               ElevatedButton(
                 onPressed: _isLoading ? null : _login,
                 child: _isLoading
@@ -112,9 +135,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     : const Text('Login'),
               ),
               const SizedBox(height: 12),
+
+              // Navigation Button: Redirects new users to the registration screen
               TextButton(
-                onPressed: () =>
-                    Navigator.pushNamed(context, '/register'),
+                onPressed: () => Navigator.pushNamed(context, '/register'),
                 child: const Text('Create an account'),
               ),
             ],

@@ -3,6 +3,7 @@ import 'home_screen.dart';
 import 'me_screen.dart';
 import 'notifications_screen.dart';
 import 'chats_screen.dart';
+import 'products_management_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -17,40 +18,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    // card width so that 2 fit in a row with padding
+    // Calculate card width to fit 2 columns with consistent padding
     final cardWidth = (width - 16 * 3) / 2;
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: Colors.black,
-
-      // ─── DRAWER (same behavior as HomeScreen) ─────────────────────
+      backgroundColor: Colors.black, // Dark theme background
+      // ─── DRAWER NAVIGATION ─────────────────────────────────────────────────
+      // Side menu accessible via the hamburger icon in the top bar
       drawer: Drawer(
         backgroundColor: const Color(0xFF000000),
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
+            // Drawer Header: Contains the back button and app branding
             Container(
               height: 60,
               decoration: const BoxDecoration(
                 color: Color(0xFFEDFF00),
-              ),
+              ), // Brand accent color
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: Colors.black,
-                    ),
+                    icon: const Icon(Icons.arrow_back, color: Colors.black),
                     splashColor: Colors.white24,
                     highlightColor: Colors.white12,
                     onPressed: () {
-                      Navigator.of(context).pop(); // close drawer
+                      Navigator.of(context).pop(); // Close the drawer
                     },
                   ),
                   const Text(
                     'Csoles Connect',
                     style: TextStyle(
+                      fontFamily: 'kobe11',
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: Colors.black,
@@ -60,14 +60,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-            // Notifications tile → NotificationScreen
+            // Navigation Item: Notifications
             InkWell(
               onTap: () {
-                Navigator.of(context).pop(); // close drawer first
+                Navigator.of(context).pop(); // Close drawer before navigating
                 Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const NotificationScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const NotificationScreen()),
                 );
               },
               child: const ListTile(
@@ -79,74 +77,67 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-            // Messages tile → ChatsScreen
+            // Navigation Item: Messages
             InkWell(
               onTap: () {
-                Navigator.of(context).pop(); // close drawer first
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const ChatsScreen(),
-                  ),
-                );
+                Navigator.of(context).pop(); // Close drawer before navigating
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const ChatsScreen()));
               },
               child: const ListTile(
                 leading: Icon(Icons.chat_bubble_outline, color: Colors.white),
-                title: Text(
-                  "Messages",
-                  style: TextStyle(color: Colors.white),
-                ),
+                title: Text("Messages", style: TextStyle(color: Colors.white)),
               ),
             ),
 
-            // Logout (placeholder)
+            // Action Item: Logout (Currently a placeholder)
             InkWell(
               onTap: () {
                 debugPrint("Pressed the Log out!");
               },
               child: const ListTile(
                 leading: Icon(Icons.logout, color: Colors.white),
-                title: Text(
-                  "Logout",
-                  style: TextStyle(color: Colors.white),
-                ),
+                title: Text("Logout", style: TextStyle(color: Colors.white)),
               ),
             ),
           ],
         ),
       ),
 
-      // ─── BODY ──────────────────────────────────────────────────────
+      // ─── MAIN BODY CONTENT ─────────────────────────────────────────────────
       body: SafeArea(
         child: Column(
           children: [
-            // TOP BAR
+            // Top Bar: Contains the Menu trigger and Page Title
             Container(
               color: Colors.black,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
+                  // Hamburger Menu Button
                   IconButton(
-                    icon: const Icon(
-                      Icons.menu,
-                      color: Colors.white,
-                      size: 28,
-                    ),
+                    icon: const Icon(Icons.menu, color: Colors.white, size: 28),
                     onPressed: () {
                       _scaffoldKey.currentState?.openDrawer();
                     },
                   ),
                   const SizedBox(width: 8),
+
+                  // Page Title
                   const Text(
                     'Dashboard',
                     style: TextStyle(
                       color: Colors.white,
+                      fontFamily: 'kobe11',
                       fontSize: 26,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.5,
                     ),
                   ),
                   const Spacer(),
-                  // logo
+
+                  // Brand Logo
                   Image.asset(
                     'assets/images/logo.png',
                     color: Colors.white,
@@ -160,30 +151,59 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             const SizedBox(height: 16),
 
-            // DASHBOARD CARDS
+            // ─── DASHBOARD METRICS GRID ──────────────────────────────────────
+            // A responsive grid of cards displaying key statistics
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Wrap(
-                spacing: 16,
-                runSpacing: 16,
+                spacing: 16, // Horizontal space between cards
+                runSpacing: 16, // Vertical space between rows
                 children: [
-                  DashboardCard(
-                    width: cardWidth,
-                    title: 'Products',
-                    count: '6',
-                    icon: Icons.bookmark_border,
+                  // Products Card: Links to Product Management
+                  InkWell(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ProductsManagementScreen(),
+                        ),
+                      );
+                    },
+                    child: DashboardCard(
+                      width: cardWidth,
+                      title: 'Products',
+                      count: '6', // Dynamic count placeholder
+                      icon: Icons.bookmark_border,
+                    ),
                   ),
-                  DashboardCard(
-                    width: cardWidth,
-                    title: 'Users',
-                    count: '8',
-                    icon: Icons.person_outline,
+
+                  // Users Card: Displays user count
+                  InkWell(
+                    child: DashboardCard(
+                      width: cardWidth,
+                      title: 'Users',
+                      count: '8', // Dynamic count placeholder
+                      icon: Icons.person_outline,
+                    ),
                   ),
-                  DashboardCard(
-                    width: cardWidth,
-                    title: 'Orders',
-                    count: '12',
-                    icon: Icons.inventory_2_outlined,
+
+                  // Orders Card: Displays active order count
+                  InkWell(
+                    child: DashboardCard(
+                      width: cardWidth,
+                      title: 'Orders',
+                      count: '12', // Dynamic count placeholder
+                      icon: Icons.inventory_2_outlined,
+                    ),
+                  ),
+
+                  // History Card: Displays past sales count
+                  InkWell(
+                    child: DashboardCard(
+                      width: cardWidth,
+                      title: 'Orders', // Label might need update to 'History'
+                      count: '12',
+                      icon: Icons.history,
+                    ),
                   ),
                 ],
               ),
@@ -192,10 +212,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
 
-      // ─── BOTTOM NAV (Home / Me) ───────────────────────────────────
+      // ─── BOTTOM NAVIGATION BAR ─────────────────────────────────────────────
+      // Provides navigation between Dashboard (Home) and Profile
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.black,
-        currentIndex: 0, // Dashboard is acting as "Home" here
+        currentIndex: 0, // Dashboard acts as the primary 'Home' view here
         selectedItemColor: Colors.white,
         unselectedItemColor: Colors.white70,
         items: const [
@@ -210,13 +231,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
         onTap: (index) {
           if (index == 0) {
-            // Go to HomeScreen
+            // Navigate to Consumer Home Screen
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const HomeScreen()),
             );
           } else if (index == 1) {
-            // Go to MeScreen
+            // Navigate to Profile Screen
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const MeScreen()),
@@ -228,8 +249,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-// ─── REUSABLE DASHBOARD CARD ───────────────────────────────────────
+// ─── REUSABLE WIDGETS ──────────────────────────────────────────────────────
 
+// A unified card widget for displaying dashboard statistics
 class DashboardCard extends StatelessWidget {
   final double width;
   final String title;
@@ -251,38 +273,34 @@ class DashboardCard extends StatelessWidget {
       height: 150,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
+          color: const Color(0xFF1E1E1E), // Card background
           borderRadius: BorderRadius.circular(6),
         ),
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // title
+            // Card Title
             Text(
               title,
               style: const TextStyle(
                 color: Colors.white,
+                fontFamily: 'kobe11',
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const Spacer(),
-            // icon
-            Center(
-              child: Icon(
-                icon,
-                size: 48,
-                color: Colors.white,
-              ),
-            ),
+            // Central Icon
+            Center(child: Icon(icon, size: 48, color: Colors.white)),
             const Spacer(),
-            // count
+            // Metric Count
             Center(
               child: Text(
                 count,
                 style: const TextStyle(
                   color: Colors.white,
+                  fontFamily: 'kobe11',
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                 ),

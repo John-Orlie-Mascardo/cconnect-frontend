@@ -6,15 +6,16 @@ class ChatsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // dark background
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Column(
           children: [
-            // ─── TOP BAR ────────────────────────────────────────────────
+            // Header Section: Contains the navigation back button and the screen title 'Chats'
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
+                  // Back Button: Navigates to the previous screen
                   InkWell(
                     onTap: () => Navigator.pop(context),
                     borderRadius: BorderRadius.circular(40),
@@ -33,9 +34,11 @@ class ChatsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 16),
+                  // Screen Title
                   const Text(
                     'Chats',
                     style: TextStyle(
+                      fontFamily: 'kobe11',
                       fontSize: 30,
                       fontWeight: FontWeight.w500,
                       letterSpacing: 1.2,
@@ -46,14 +49,14 @@ class ChatsScreen extends StatelessWidget {
               ),
             ),
 
-            // ─── CHAT PREVIEW ROW (BIG HEEL JANE) ────────────────────────
+            // Chat List Item: Displays a preview of a conversation with a user
             Container(
               width: double.infinity,
               color: const Color(0xFF404040),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               child: Row(
                 children: [
-                  // profile circle
+                  // Profile Picture: Placeholder for the user's avatar
                   Container(
                     width: 90,
                     height: 90,
@@ -66,6 +69,7 @@ class ChatsScreen extends StatelessWidget {
                       'profile',
                       style: TextStyle(
                         color: Colors.black,
+                        fontFamily: 'kobe11',
                         fontSize: 18,
                         letterSpacing: 1.2,
                       ),
@@ -73,7 +77,7 @@ class ChatsScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 16),
 
-                  // name + last message
+                  // Message Details: Shows the user's name and the last message content
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,6 +85,7 @@ class ChatsScreen extends StatelessWidget {
                         Text(
                           'BIG HEEL JANE',
                           style: TextStyle(
+                            fontFamily: 'kobe11',
                             fontSize: 22,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
@@ -90,6 +95,7 @@ class ChatsScreen extends StatelessWidget {
                         Text(
                           'This shoe is unavailable, would you like another one?',
                           style: TextStyle(
+                            fontFamily: 'kobe11',
                             fontSize: 16,
                             color: Colors.white70,
                           ),
@@ -101,12 +107,8 @@ class ChatsScreen extends StatelessWidget {
               ),
             ),
 
-            // ─── REST OF SCREEN (empty for now) ─────────────────────────
-            Expanded(
-              child: Container(
-                color: Colors.black,
-              ),
-            ),
+            // Remaining Space: Fills the rest of the screen below the chat list
+            Expanded(child: Container(color: Colors.black)),
           ],
         ),
       ),
