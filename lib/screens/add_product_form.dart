@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart'; // for image picking
 import 'dart:io'; // needed to display picked images
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+// Use a runtime base URL so Android emulator uses 10.0.2.2 automatically.
+// For physical devices, replace with your machine LAN IP (e.g. http://192.168.1.42:3000/api)
+final String kApiBaseUrl =
+  Platform.isAndroid ? 'http://10.0.2.2:3000/api' : 'http://localhost:3000/api';
 
 // a form widget for adding a new product
 class AddProductForm extends StatefulWidget {
@@ -99,29 +106,90 @@ class _AddProductFormState extends State<AddProductForm> {
   // ---------------------------------------------------------------
 
   Future<void> _saveProduct() async {
-    // function to save product (to be implemented)
     // show loading indicator
     setState(() {
       _isLoading = true;
     });
 
-    // REPLACE THIS LINE with your backend API call ↓ PLEASE PLEASE PLEASE PLEASE PLEASE!
-    await Future.delayed(const Duration(seconds: 2));
+    final uri = Uri.parse('$kApiBaseUrl/products');
 
-    // hide loading indicator
-    setState(() {
-      _isLoading = false;
-    });
+    try {
+      http.Response response;
+      debugPrint('POST -> $uri');
 
-    if (mounted) {
-      // show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Product saved successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pop(context); // close the form
+      // If an image is selected, use multipart request
+      if (_selectedImage != null) {
+        final request = http.MultipartRequest('POST', uri);
+        request.fields['name'] = _nameController.text;
+        request.fields['productId'] = _productIDController.text;
+        request.fields['price'] = _priceController.text;
+        request.fields['size'] = _sizeController.text;
+        request.fields['description'] = _descriptionController.text;
+        request.fields['materials'] = _materialsController.text;
+        request.fields['condition'] = _conditionController.text;
+        request.fields['quantity'] = _quantityController.text;
+        request.files.add(await http.MultipartFile.fromPath('image', _selectedImage!.path));
+
+        final streamed = await request.send();
+        response = await http.Response.fromStream(streamed);
+        debugPrint('Multipart response: ${response.statusCode} ${response.body}');
+      } else {
+        // Otherwise send JSON body
+        final body = {
+          'name': _nameController.text,
+          'productId': _productIDController.text,
+          'price': _priceController.text,
+          'size': _sizeController.text,
+          'description': _descriptionController.text,
+          'materials': _materialsController.text,
+          'condition': _conditionController.text,
+          'quantity': _quantityController.text,
+        };
+
+        debugPrint('JSON POST body: ${jsonEncode(body)}');
+        response = await http.post(
+          uri,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(body),
+        );
+        debugPrint('JSON response: ${response.statusCode} ${response.body}');
+      }
+
+      // hide loading indicator
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (!mounted) return;
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Product saved successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context); // close the form
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save product: ${response.statusCode} ${response.body}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving product: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
