@@ -30,6 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  image_picker: ^0.8.7+4 # for picking images from gallery or camera
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -76,10 +77,16 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
+  fonts:
+    - family: kobe11
+      fonts:
+        - asset: assets/fonts/kobe11-regular.ttf
+    - family: impact
+      fonts:
+        - asset: assets/fonts/impact.ttf
+    - family: kobe11Bold
+      fonts:
+        - asset: assets/fonts/kobe11-bold.ttf
   #       - asset: fonts/Schyler-Italic.ttf
   #         style: italic
   #   - family: Trajan Pro
@@ -87,6 +94,7 @@ flutter:
   #       - asset: fonts/TrajanPro.ttf
   #       - asset: fonts/TrajanPro_Bold.ttf
   #         weight: 700
+
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package

@@ -24,7 +24,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       initialRoute: '/',
       routes: {
-        '/': (context) => const DashboardScreen(), // Changed to DashboardScreen Temporarily
+        '/': (context) =>
+            const DashboardScreen(), // Changed to DashboardScreen Temporarily
         '/register': (context) => const RegisterScreen(),
         '/home': (context) => const LoginScreen(),
       },

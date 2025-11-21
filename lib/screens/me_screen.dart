@@ -10,16 +10,16 @@ class MeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, //dark background
+      backgroundColor: Colors.black, // Dark theme background
       body: SafeArea(
         child: Column(
           children: [
-            // ─── TOP BAR: notif + chat + logo ────────────────────────────────
+            // ─── TOP BAR NAVIGATION & BRANDING ────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Row(
                 children: [
-                  // tap to go to Notifications
+                  // Notifications Button: Navigates to the NotificationScreen
                   IconButton(
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -37,31 +37,33 @@ class MeScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  
-                  // tap to go to Chats
+
+                  // Chat Button: Navigates to the ChatsScreen
+                  // Translated slightly left to adjust visual spacing between icons
                   Transform.translate(
                     offset: const Offset(-6, 0),
                     child: IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    icon: const Icon(
-                      Icons.chat_bubble_outline,
-                      size: 32,
-                      color: Colors.white,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(
+                        Icons.chat_bubble_outline,
+                        size: 32,
+                        color: Colors.white,
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ChatsScreen(),
+                          ),
+                        );
+                      },
                     ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ChatsScreen(),
-                        ),
-                      );
-                    },
                   ),
-               ),
 
                   const Spacer(),
-                  
+
+                  // Brand Logo: Displayed on the far right of the top bar
                   Image.asset(
                     'assets/images/logo.png',
                     color: Colors.white,
@@ -73,11 +75,12 @@ class MeScreen extends StatelessWidget {
               ),
             ),
 
-            // ─── PROFILE ROW ─────────────────────────────────────────────────
+            // ─── USER PROFILE HEADER ──────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 children: [
+                  // User Avatar: Circular placeholder for profile image
                   Container(
                     width: 110,
                     height: 110,
@@ -92,11 +95,13 @@ class MeScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 24),
+                  // User Name: Displays the current user's display name
                   const Expanded(
                     child: Text(
                       'BIG SHOE JOE',
                       style: TextStyle(
                         color: Colors.white,
+                        fontFamily: 'kobe11',
                         fontSize: 26,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 1.5,
@@ -109,29 +114,30 @@ class MeScreen extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // divider
+            // Visual Divider
             Container(height: 1, color: Colors.white24),
 
-            // ─── "MY PURCHASES" BAND ────────────────────────────────────────
+            // ─── PURCHASE HISTORY LINK ────────────────────────────────────────
             GestureDetector(
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const MyPurchasesScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const MyPurchasesScreen()),
                 );
               },
               child: Container(
                 color: Colors.black,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'My Purchases',
                       style: TextStyle(
+                        fontFamily: 'kobe11',
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
                         color: Colors.white,
@@ -140,6 +146,7 @@ class MeScreen extends StatelessWidget {
                     Text(
                       'View Purchase History',
                       style: TextStyle(
+                        fontFamily: 'kobe11',
                         fontSize: 16,
                         color: Colors.white70,
                       ),
@@ -151,31 +158,28 @@ class MeScreen extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            // ─── TO PAY / TO SHIP / TO RECEIVE ROW ──────────────────────────
+            // ─── ORDER STATUS ICONS ───────────────────────────────────────────
+            // Quick access to orders in different states
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: const [
-                  _StatusIcon(
-                    icon: Icons.payments_outlined,
-                    label: 'To pay',
-                  ),
+                  _StatusIcon(icon: Icons.payments_outlined, label: 'To pay'),
                   _StatusIcon(
                     icon: Icons.local_shipping_outlined,
                     label: 'To Ship',
                   ),
-                  _StatusIcon(
-                    icon: Icons.inbox_outlined,
-                    label: 'To Receive',
-                  ),
+                  _StatusIcon(icon: Icons.inbox_outlined, label: 'To Receive'),
                 ],
               ),
             ),
 
             const SizedBox(height: 24),
 
-            // ─── WISHLIST HEADER ─────────────────────────────────────────────
+            // ─── WISHLIST SECTION ─────────────────────────────────────────────
+
+            // Wishlist Header Label
             Container(
               width: double.infinity,
               color: const Color(0xFF403636),
@@ -184,29 +188,30 @@ class MeScreen extends StatelessWidget {
                 "BIG SHOE JOE'S WISHLIST",
                 style: TextStyle(
                   color: Colors.white,
+                  fontFamily: 'kobe11',
                   fontSize: 18,
                   letterSpacing: 1.5,
                 ),
               ),
             ),
 
-            // ─── WISHLIST ITEMS (SCROLLABLE) ─────────────────────────────────
+            // Wishlist Items List: Scrollable area for saved items
             Expanded(
               child: ListView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
                 children: const [
                   WishlistItem(
                     title: 'JOSHUA SHOES',
-                    description:
-                        'lorem ipsum\ndetails details\nskibidi rizz',
+                    description: 'lorem ipsum\ndetails details\nskibidi rizz',
                     price: '₱420.69',
                   ),
                   SizedBox(height: 16),
                   WishlistItem(
                     title: 'JAMES SHOES',
-                    description:
-                        'lorem ipsum\ndetails details\nskibidi rizz',
+                    description: 'lorem ipsum\ndetails details\nskibidi rizz',
                     price: '₱420.69',
                   ),
                 ],
@@ -216,16 +221,19 @@ class MeScreen extends StatelessWidget {
         ),
       ),
 
-      // ─── BOTTOM NAV (static, Me selected) ─────────────────────────────────
+      // ─── BOTTOM NAVIGATION BAR ────────────────────────────────────────────
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.black,
-        currentIndex: 2, // this screen is "Me"
+        currentIndex: 2, // Indicates "Me" tab is currently selected
         selectedItemColor: Colors.white,
         unselectedItemColor: Colors.white70,
         onTap: (index) {
-          // Navigate either to home or cart
+          // Navigation Logic:
+          // Index 0: Go back to Home
+          // Index 1: Push to Cart
+          // Index 2: Stay on Profile (Current)
           if (index == 0) {
-            Navigator.pop(context); // go back to previous (Home in your flow)
+            Navigator.pop(context);
           } else if (index == 1) {
             Navigator.push(
               context,
@@ -253,17 +261,15 @@ class MeScreen extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Small widgets used above
+// HELPER WIDGETS
 // ─────────────────────────────────────────────────────────────────────────────
 
+// A helper widget to render a status icon (e.g., To Pay) with a label below it
 class _StatusIcon extends StatelessWidget {
   final IconData icon;
   final String label;
 
-  const _StatusIcon({
-    required this.icon,
-    required this.label,
-  });
+  const _StatusIcon({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -273,13 +279,18 @@ class _StatusIcon extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           label,
-          style: const TextStyle(fontSize: 16, color: Colors.white70),
+          style: const TextStyle(
+            fontFamily: 'kobe11',
+            fontSize: 16,
+            color: Colors.white70,
+          ),
         ),
       ],
     );
   }
 }
 
+// A reusable card widget representing a single item in the Wishlist
 class WishlistItem extends StatelessWidget {
   final String title;
   final String description;
@@ -295,11 +306,11 @@ class WishlistItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF1E1E1E), // dark card background
+      color: const Color(0xFF1E1E1E), // Card background color
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          // Shoe picture placeholder
+          // Product Image Placeholder
           Container(
             width: 110,
             height: 110,
@@ -308,15 +319,12 @@ class WishlistItem extends StatelessWidget {
             child: const Text(
               'SHOE\nPIC',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white,
-                letterSpacing: 1.2,
-              ),
+              style: TextStyle(color: Colors.white, letterSpacing: 1.2),
             ),
           ),
           const SizedBox(width: 16),
 
-          // Texts + button/price
+          // Product Details Column
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -324,6 +332,7 @@ class WishlistItem extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
+                    fontFamily: 'kobe11',
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
@@ -333,16 +342,18 @@ class WishlistItem extends StatelessWidget {
                 Text(
                   description,
                   style: const TextStyle(
+                    fontFamily: 'kobe11',
                     fontSize: 16,
                     color: Colors.white70,
                   ),
                 ),
                 const SizedBox(height: 16),
 
-                // PRICE + ADD TO CART (no overflow)
+                // Price and 'Add to Cart' Button Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    // Price Tag
                     Flexible(
                       flex: 4,
                       child: Container(
@@ -357,6 +368,7 @@ class WishlistItem extends StatelessWidget {
                             price,
                             style: const TextStyle(
                               color: Colors.white,
+                              fontFamily: 'kobe11',
                               fontSize: 18,
                             ),
                           ),
@@ -364,6 +376,7 @@ class WishlistItem extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
+                    // Add to Cart Action
                     Flexible(
                       flex: 6,
                       child: Container(
@@ -380,6 +393,7 @@ class WishlistItem extends StatelessWidget {
                           child: Text(
                             'Add to Cart',
                             style: TextStyle(
+                              fontFamily: 'kobe11',
                               fontSize: 16,
                               color: Colors.white,
                             ),

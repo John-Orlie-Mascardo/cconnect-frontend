@@ -10,28 +10,34 @@ class CartScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Top bar: CART + close (X)
+            // Header Section: Displays the screen title 'CART' and a close button
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 16.0,
+              ),
               child: Row(
                 children: [
-                  // This Expanded + Center keeps "CART" centered
+                  // Title Container: Expands to fill space and centers the text
                   Expanded(
                     child: Center(
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 40), // to offset the close button
+                        // Offset padding to visually center the title against the right-aligned close button
+                        padding: const EdgeInsets.only(left: 40),
                         child: Text(
                           'CART',
                           style: const TextStyle(
+                            fontFamily: 'kobe11',
                             fontSize: 24,
                             letterSpacing: 4,
                             fontWeight: FontWeight.w400,
                             color: Color.fromARGB(255, 255, 255, 255),
-                            ),
                           ),
                         ),
                       ),
                     ),
+                  ),
+                  // Navigation: Close button to dismiss the screen
                   IconButton(
                     icon: const Icon(
                       Icons.close,
@@ -46,25 +52,29 @@ class CartScreen extends StatelessWidget {
               ),
             ),
 
-            // Empty space / body
-            const Expanded(
-              child: SizedBox.expand(),
-            ),
+            // Spacer: Occupies remaining vertical space to push the footer to the bottom
+            const Expanded(child: SizedBox.expand()),
 
-            // Bottom total + button area
+            // Footer Section: Contains the total amount display and the main action button
             Container(
-              color: const Color.fromARGB(255, 0, 0, 0), // light grey bar
+              color: const Color.fromARGB(
+                255,
+                0,
+                0,
+                0,
+              ), // Background color matches scaffold
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // TOTAL row
+                  // Summary Row: Displays 'TOTAL' label and the current cart value
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: const [
                       Text(
                         'TOTAL:',
                         style: TextStyle(
+                          fontFamily: 'kobe11',
                           fontSize: 24,
                           fontWeight: FontWeight.w400,
                           letterSpacing: 2,
@@ -74,6 +84,7 @@ class CartScreen extends StatelessWidget {
                       Text(
                         '₱0.00',
                         style: TextStyle(
+                          fontFamily: 'kobe11',
                           fontSize: 24,
                           fontWeight: FontWeight.w400,
                           letterSpacing: 1,
@@ -84,12 +95,12 @@ class CartScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // "CART IS EMPTY" button
+                  // Primary Action Button: Indicates cart state (Empty) or triggers checkout
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        // nothing for now, cart is empty
+                        // No action required when cart is empty
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF666666),
@@ -102,6 +113,7 @@ class CartScreen extends StatelessWidget {
                       child: const Text(
                         'CART IS EMPTY',
                         style: TextStyle(
+                          fontFamily: 'kobe11',
                           fontSize: 18,
                           letterSpacing: 2,
                           color: Colors.white,
