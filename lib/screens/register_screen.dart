@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'home_screen.dart';
 import 'package:http/http.dart' as http;
 
 class RegisterScreen extends StatefulWidget {
@@ -128,7 +129,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  // Show success modal and navigate
+  // Show success modal and navigate to home screen
   void _showSuccessDialog() {
     showDialog(
       context: context,
@@ -150,8 +151,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
             const SizedBox(height: 8),
+            // CHANGED: Update text since they don't need to log in anymore
             const Text(
-              'Account created successfully',
+              'Account created successfully.',
               style: TextStyle(color: Colors.white70, fontSize: 16),
               textAlign: TextAlign.center,
             ),
@@ -161,10 +163,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.pop(ctx); // Close dialog
-                  Navigator.pushReplacementNamed(
+
+                  // CHANGED: Navigate to Home Screen
+                  // We use pushAndRemoveUntil to clear the back button history
+                  // so the user can't go back to the Register/Login screen
+                  Navigator.pushAndRemoveUntil(
                     context,
-                    '/home',
-                  ); // Navigate to home
+                    MaterialPageRoute(builder: (_) => const HomeScreen()), 
+                    (route) => false,
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFEDFF00),
@@ -173,8 +180,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
+                // CHANGED: Button text
                 child: const Text(
-                  'Continue',
+                  'Continue to App',
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 16,
