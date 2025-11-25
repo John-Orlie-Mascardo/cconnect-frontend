@@ -4,7 +4,8 @@ import 'cart_screen.dart';
 import 'me_screen.dart';
 import 'notifications_screen.dart';
 import 'chats_screen.dart';
-import 'login_screen.dart'; // Add this import
+import 'product_detail_screen.dart';
+import 'login_screen.dart';
 
 /// Main home screen widget that displays products and handles navigation
 /// Features: Auto-rotating hero banner, product grid, bottom navigation, drawer menu
@@ -93,6 +94,19 @@ class _HomeScreenState extends State<HomeScreen> {
       ).push(MaterialPageRoute(builder: (_) => const MeScreen()));
     }
     // index 0 = Home, stay on current screen
+  }
+
+  /// Handles navigation to product detail screen
+  void _navigateToProductDetail(Map<String, String?> product) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ProductDetailScreen(
+          productTitle: product['title'] ?? 'Product',
+          productPrice: product['price'] ?? '₱0',
+          productImage: product['image'],
+        ),
+      ),
+    );
   }
 
   // ─── HERO BANNER AUTO-ROTATION ─────────────────────────────
@@ -444,6 +458,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             title: product['title'] ?? '',
                             price: product['price'] ?? '',
                             imageUrl: product['image'],
+                            onTap: () => _navigateToProductDetail(product),
                           );
                         },
                       ),
