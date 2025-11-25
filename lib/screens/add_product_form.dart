@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart'; // for image picking
 import 'dart:io'; // needed to display picked images
+import 'package:flutter/foundation.dart'
+    show kIsWeb; // to check if running on web
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 // Use a runtime base URL so Android emulator uses 10.0.2.2 automatically.
 // For physical devices, replace with your machine LAN IP (e.g. http://192.168.1.42:3000/api)
-final String kApiBaseUrl =
-  Platform.isAndroid ? 'http://10.0.2.2:3000/api' : 'http://localhost:3000/api';
+final String kApiBaseUrl = Platform.isAndroid
+    ? 'http://10.0.2.2:3000/api'
+    : 'http://localhost:3000/api';
 
 // a form widget for adding a new product
 class AddProductForm extends StatefulWidget {
@@ -28,85 +31,170 @@ class _AddProductFormState extends State<AddProductForm> {
   final TextEditingController _conditionController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
 
-  //
-  File? _selectedImage; // store the selected image file (null if none selected)
+  dynamic _selectedImage; // to store selected image file mobile or web
+  String? _selectedImagePath; //stores filename for upload
   final ImagePicker _picker = ImagePicker(); // image picker instance
-  bool _isLoading = false; // loading state for form submission
+  bool _isLoading = false; // loading state for save button
 
+  // focus nodes for each field (if needed for advanced focus management)
+  final List<FocusNode> _focusNodes = List.generate(8, (_) => FocusNode());
+
+  // error messages for each field (if needed for validation)
+  final List<String?> _errors = List.filled(8, null);
+
+  // Scroll controller to auto-scroll to errors
+  final ScrollController _scrollController = ScrollController();
+
+  // opens gallery and stores image (mobile) or image bytes (web)
   Future<void> _pickImage() async {
-    // main image picking function
-    final XFile? pickedFiles = await _picker.pickImage(
+    final XFile? pickedFile = await _picker.pickImage(
       source: ImageSource.gallery,
-    ); // opens gallery
+    );
 
-    if (pickedFiles != null) {
-      // if an image is picked
-      setState(() {
-        _selectedImage = File(pickedFiles.path); // store selected image file
-      });
+    if (pickedFile != null) {
+      if (kIsWeb) {
+        // web platform: store as bytes
+        final bytes = await pickedFile.readAsBytes();
+        setState(() {
+          _selectedImage = bytes;
+          _selectedImagePath = pickedFile.name;
+        });
+      } else {
+        // mobile platform: store as file
+        setState(() {
+          _selectedImage = File(pickedFile.path);
+          _selectedImagePath = pickedFile.path;
+        });
+      }
     }
   }
 
-  // TODO: Backend - Replace this with actual API call
-  // Available data to send:
-  // - Product Name: _nameController.text
-  // - Product ID: _productIDController.text
-  // - Price: _priceController.text
-  // - Size: _sizeController.text
-  // - Description: _descriptionController.text
-  // - Materials: _materialsController.text
-  // - Condition: _conditionController.text
-  // - Quantity: _quantityController.text
-  // - Image file: _selectedImage (File? - can be null)
-  //
-  // On success: Keep the success SnackBar and Navigator.pop()
-  // On error: Show error SnackBar instead, you can copy what I did for success SnackBar for reference
+  // validates all fields and focuses/scrolls to first error
+  bool _validateFields() {
+    // clear previous errors
+    setState(() {
+      for (int i = 0; i < _errors.length; i++) {
+        _errors[i] = null;
+      }
+    });
 
-  // AFTER THIS (Backend Developer - Ken & John Orlie) tasks:
-  //Create API endpoints for:
+    bool isValid = true;
+    int? firstErrorIndex;
 
-  // POST /products - Save new product (receives data from the form you built)
-  // GET /products - Fetch all products for display
-  // PUT /products/:id - Update existing product
-  // DELETE /products/:id - Remove product
+    // validate each field in order
+    final validations = [
+      // 0: name
+      _nameController.text.trim().isEmpty ? 'Product name is required' : null,
+      // 1: product ID
+      _productIDController.text.trim().isEmpty
+          ? 'Product ID is required'
+          : null,
+      // 2: price
+      () {
+        if (_priceController.text.trim().isEmpty) return 'Price is required';
+        final price = double.tryParse(_priceController.text.trim());
+        if (price == null || price <= 0) return 'Price must be greater than 0';
+        return null;
+      }(),
+      // 3: size
+      _sizeController.text.trim().isEmpty ? 'Size is required' : null,
+      // 4: description
+      _descriptionController.text.trim().isEmpty
+          ? 'Description is required'
+          : null,
+      // 5: materials
+      _materialsController.text.trim().isEmpty
+          ? 'Materials are required'
+          : null,
+      // 6: condition
+      _conditionController.text.trim().isEmpty ? 'Condition is required' : null,
+      // 7: quantity
+      () {
+        if (_quantityController.text.trim().isEmpty) {
+          return 'Quantity is required';
+        }
+        final qty = int.tryParse(_quantityController.text.trim());
+        if (qty == null || qty < 0) return 'Quantity must be 0 or greater';
+        return null;
+      }(),
+    ];
 
-  // Connect the form - Replace the Future.delayed(...) in _saveProduct() with actual API call that sends the 8 fields + image to MongoDB
+    // check for errors and track first one
+    for (int i = 0; i < validations.length; i++) {
+      if (validations[i] != null) {
+        _errors[i] = validations[i];
+        firstErrorIndex ??= i;
+        isValid = false;
+      }
+    }
 
-  // Frontend Developer (Joshua Austria & John Orlie) tasks:
+    // check image separately
+    if (_selectedImage == null) {
+      isValid = false;
+      // show dialog since image picker isn't a text field
+      if (firstErrorIndex == null) {
+        // image is the first error
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              backgroundColor: const Color(0xFF1E1E1E),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              title: const Text(
+                'Missing Image',
+                style: TextStyle(color: Colors.white),
+              ),
+              content: const Text(
+                'Please add a product image before saving.',
+                style: TextStyle(color: Colors.white70),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text(
+                    'OK',
+                    style: TextStyle(color: Color(0xFFEDFF00)),
+                  ),
+                ),
+              ],
+            ),
+          );
+        });
+        return false;
+      }
+    }
 
-  // Display products on homepage - Replace the hardcoded demoProducts list in home_screen.dart with products fetched from the backend API
-  // Products Management screen updates:
+    // Focus and scroll to first error if any
+    if (firstErrorIndex != null) {
+      setState(() {}); // Rebuild to show error messages
+      _focusNodes[firstErrorIndex].requestFocus();
 
-  // Replace empty state with a list of products (when products exist)
-  // Each product card should have Edit and Delete buttons
+      // Scroll to error field (estimate 80px per field)
+      _scrollController.animateTo(
+        firstErrorIndex * 80.0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
 
-  // Edit functionality:
+    return isValid;
+  }
 
-  // Tapping Edit opens the same AddProductForm but pre-filled with existing product data
-  // Change "Add New Product" title to "Edit Product"
-  // Change "Save Product" button logic to call PUT instead of POST
-
-  // Delete functionality:
-
-  // Tapping Delete shows a confirmation dialog ("Are you sure?")
-  // If confirmed, call DELETE API and remove from list
-  // ---------------------------------------------------------------
-  // ADDITIONAL FEATURES SUGGESTIONS:
-  // Critical (do these next):
-
-  // Form validation - Don't let owner save if required fields (Name, Price, Quantity) are empty
-  // Error handling - Show error message if API call fails (network issues, server down)
-  // Loading state on Products screen - Show spinner while fetching products from backend
-
-  // Nice to have (later):
-
-  // Search/filter products - Let owner find products quickly as inventory grows
-  // Product details page - Tap a product to see full info (currently just shows in grid)
-  // Low stock alerts - Highlight products with quantity < 5
-  // ---------------------------------------------------------------
-
+  /// Validates inputs and sends product data to backend
   Future<void> _saveProduct() async {
-    // show loading indicator
+    // run validation first
+    if (!_validateFields()) {
+      return; // stop here if validation fails
+    }
+
+    // parse validated values
+    final price = double.parse(_priceController.text.trim());
+    final quantity = int.parse(_quantityController.text.trim());
+
+    // ========== API REQUEST ==========
+
     setState(() {
       _isLoading = true;
     });
@@ -114,48 +202,43 @@ class _AddProductFormState extends State<AddProductForm> {
     final uri = Uri.parse('$kApiBaseUrl/products');
 
     try {
-      http.Response response;
-      debugPrint('POST -> $uri');
+      // Use multipart request to send form data + image
+      final request = http.MultipartRequest('POST', uri);
+      // Add text fields
+      request.fields['name'] = _nameController.text.trim();
+      request.fields['productId'] = _productIDController.text.trim();
+      request.fields['price'] = price.toString();
+      request.fields['size'] = _sizeController.text.trim();
+      request.fields['description'] = _descriptionController.text.trim();
+      request.fields['materials'] = _materialsController.text.trim();
+      request.fields['condition'] = _conditionController.text.trim();
+      request.fields['quantity'] = quantity.toString();
 
-      // If an image is selected, use multipart request
-      if (_selectedImage != null) {
-        final request = http.MultipartRequest('POST', uri);
-        request.fields['name'] = _nameController.text;
-        request.fields['productId'] = _productIDController.text;
-        request.fields['price'] = _priceController.text;
-        request.fields['size'] = _sizeController.text;
-        request.fields['description'] = _descriptionController.text;
-        request.fields['materials'] = _materialsController.text;
-        request.fields['condition'] = _conditionController.text;
-        request.fields['quantity'] = _quantityController.text;
-        request.files.add(await http.MultipartFile.fromPath('image', _selectedImage!.path));
-
-        final streamed = await request.send();
-        response = await http.Response.fromStream(streamed);
-        debugPrint('Multipart response: ${response.statusCode} ${response.body}');
-      } else {
-        // Otherwise send JSON body
-        final body = {
-          'name': _nameController.text,
-          'productId': _productIDController.text,
-          'price': _priceController.text,
-          'size': _sizeController.text,
-          'description': _descriptionController.text,
-          'materials': _materialsController.text,
-          'condition': _conditionController.text,
-          'quantity': _quantityController.text,
-        };
-
-        debugPrint('JSON POST body: ${jsonEncode(body)}');
-        response = await http.post(
-          uri,
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode(body),
+      // Add image file (different handling for web vs mobile)
+      if (kIsWeb) {
+        // Web: upload from bytes
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'image',
+            _selectedImage!,
+            filename: _selectedImagePath ?? 'product.jpg',
+          ),
         );
-        debugPrint('JSON response: ${response.statusCode} ${response.body}');
+      } else {
+        // Mobile: upload from file path
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'image',
+            (_selectedImage as File).path,
+          ),
+        );
       }
 
-      // hide loading indicator
+      debugPrint('POST -> $uri');
+      final streamed = await request.send();
+      final response = await http.Response.fromStream(streamed);
+      debugPrint('Response: ${response.statusCode} ${response.body}');
+
       setState(() {
         _isLoading = false;
       });
@@ -163,34 +246,91 @@ class _AddProductFormState extends State<AddProductForm> {
       if (!mounted) return;
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Product saved successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context); // close the form
+        // Success - show modal
+        _showSuccessDialog();
       } else {
+        // API error
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to save product: ${response.statusCode} ${response.body}'),
+            content: Text('Failed to save: ${response.statusCode}'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
     } catch (e) {
+      // Network error
       setState(() {
         _isLoading = false;
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving product: $e'),
+            content: Text('Error: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
     }
+  }
+
+  // show success modal and closes form
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle, color: Color(0xFFEDFF00), size: 64),
+            const SizedBox(height: 20),
+            const Text(
+              'Success!',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Product saved successfully',
+              style: TextStyle(color: Colors.white70, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx); // Close dialog
+                  Navigator.pop(context); // Close form
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFEDFF00),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Done',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -210,6 +350,15 @@ class _AddProductFormState extends State<AddProductForm> {
     _materialsController.dispose();
     _conditionController.dispose();
     _quantityController.dispose();
+
+    // dispose focus nodes
+    for (var node in _focusNodes) {
+      node.dispose();
+    }
+
+    // dispose error scroll controller
+    _scrollController.dispose();
+
     super.dispose();
   }
 
@@ -219,6 +368,8 @@ class _AddProductFormState extends State<AddProductForm> {
       padding: const EdgeInsets.all(24),
       child: SingleChildScrollView(
         // for scrollability
+        controller:
+            _scrollController, // attach scroll controller to scroll view
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -230,67 +381,84 @@ class _AddProductFormState extends State<AddProductForm> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             // add image section
-            const SizedBox(height: 16),
-            GestureDetector(
-              onTap: _pickImage,
-              child: Container(
-                height: 120,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  // container decoration
-                  color: Colors.grey[800],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white30),
+            const SizedBox(height: 20),
+            Focus(
+              canRequestFocus: false, // prevent focus on container
+              child: GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 120,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    // container decoration
+                    color: Colors.grey[800],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.white30),
+                  ),
+                  child:
+                      _selectedImage ==
+                          null // if an image is selected, show it
+                      ? const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.add_photo_alternate,
+                              size: 40,
+                              color: Colors.white70,
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Tap to add product photo',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ],
+                        )
+                      : ClipRRect(
+                          // else show placeholder
+                          borderRadius: BorderRadius.circular(8),
+                          child: kIsWeb
+                              ? Image.memory(_selectedImage!, fit: BoxFit.cover)
+                              : Image.file(_selectedImage!, fit: BoxFit.cover),
+                        ),
                 ),
-                child:
-                    _selectedImage ==
-                        null // if an image is selected, show it
-                    ? const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.add_photo_alternate,
-                            size: 40,
-                            color: Colors.white70,
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Tap to add product photo',
-                            style: TextStyle(color: Colors.white70),
-                          ),
-                        ],
-                      )
-                    : ClipRRect(
-                        // else show placeholder
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.file(_selectedImage!, fit: BoxFit.cover),
-                      ),
               ),
             ),
             // Product Name field
             TextField(
               controller: _nameController,
+              focusNode: _focusNodes[0], // index 0 = name
+              textInputAction: TextInputAction.next, // move to next field
+              onSubmitted: (_) => _focusNodes[1].requestFocus(),
               style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Product Name',
-                labelStyle: TextStyle(color: Colors.white70),
-                enabledBorder: UnderlineInputBorder(
+                labelStyle: const TextStyle(color: Colors.white70),
+                errorText: _errors[0], // show error if any
+                errorStyle: const TextStyle(color: Colors.redAccent),
+                enabledBorder: const UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.white30),
                 ),
-                focusedBorder: UnderlineInputBorder(
+                focusedBorder: const UnderlineInputBorder(
                   borderSide: BorderSide(color: Color(0xFFEDFF00)),
                 ),
               ),
+              onChanged: (_) =>
+                  setState(() => _errors[0] = null), // clear error on change
             ),
             // Product ID field
             TextField(
               controller: _productIDController,
+              focusNode: _focusNodes[1], // index 1 = product ID
+              textInputAction: TextInputAction.next, // move to next field
+              onSubmitted: (_) => _focusNodes[2].requestFocus(),
               style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Product ID',
                 labelStyle: TextStyle(color: Colors.white70),
+                errorText: _errors[1], // show error if any
+                errorStyle: const TextStyle(color: Colors.redAccent),
                 enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.white30),
                 ),
@@ -298,14 +466,20 @@ class _AddProductFormState extends State<AddProductForm> {
                   borderSide: BorderSide(color: Color(0xFFEDFF00)),
                 ),
               ),
+              onChanged: (_) => setState(() => _errors[1] = null),
             ),
             // Price field
             TextField(
               controller: _priceController,
+              focusNode: _focusNodes[2], // index 2 = price
+              textInputAction: TextInputAction.next, // move to next field
+              onSubmitted: (_) => _focusNodes[3].requestFocus(),
               style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Price',
                 labelStyle: TextStyle(color: Colors.white70),
+                errorText: _errors[2], // show error if any
+                errorStyle: const TextStyle(color: Colors.redAccent),
                 enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.white30),
                 ),
@@ -313,14 +487,20 @@ class _AddProductFormState extends State<AddProductForm> {
                   borderSide: BorderSide(color: Color(0xFFEDFF00)),
                 ),
               ),
+              onChanged: (_) => setState(() => _errors[2] = null),
             ),
             // Size field
             TextField(
               controller: _sizeController,
+              focusNode: _focusNodes[3], // index 3 = size
+              textInputAction: TextInputAction.next, // move to next field
+              onSubmitted: (_) => _focusNodes[4].requestFocus(),
               style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Size',
                 labelStyle: TextStyle(color: Colors.white70),
+                errorText: _errors[3], // show error if any
+                errorStyle: const TextStyle(color: Colors.redAccent),
                 enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.white30),
                 ),
@@ -328,14 +508,20 @@ class _AddProductFormState extends State<AddProductForm> {
                   borderSide: BorderSide(color: Color(0xFFEDFF00)),
                 ),
               ),
+              onChanged: (_) => setState(() => _errors[3] = null),
             ),
             // Description field
             TextField(
               controller: _descriptionController,
+              focusNode: _focusNodes[4], // index 4 = description
+              textInputAction: TextInputAction.next, // move to next field
+              onSubmitted: (_) => _focusNodes[5].requestFocus(),
               style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Description',
                 labelStyle: TextStyle(color: Colors.white70),
+                errorText: _errors[4], // show error if any
+                errorStyle: const TextStyle(color: Colors.redAccent),
                 enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.white30),
                 ),
@@ -343,14 +529,20 @@ class _AddProductFormState extends State<AddProductForm> {
                   borderSide: BorderSide(color: Color(0xFFEDFF00)),
                 ),
               ),
+              onChanged: (_) => setState(() => _errors[4] = null),
             ),
             // Materials field
             TextField(
               controller: _materialsController,
+              focusNode: _focusNodes[5], // index 5 = materials
+              textInputAction: TextInputAction.next, // move to next field
+              onSubmitted: (_) => _focusNodes[6].requestFocus(),
               style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Materials',
                 labelStyle: TextStyle(color: Colors.white70),
+                errorText: _errors[5], // show error if any
+                errorStyle: const TextStyle(color: Colors.redAccent),
                 enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.white30),
                 ),
@@ -358,14 +550,20 @@ class _AddProductFormState extends State<AddProductForm> {
                   borderSide: BorderSide(color: Color(0xFFEDFF00)),
                 ),
               ),
+              onChanged: (_) => setState(() => _errors[5] = null),
             ),
             // Condition field
             TextField(
               controller: _conditionController,
+              focusNode: _focusNodes[6], // index 6 = condition
+              textInputAction: TextInputAction.next, // move to next field
+              onSubmitted: (_) => _focusNodes[7].requestFocus(),
               style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Condition',
                 labelStyle: TextStyle(color: Colors.white70),
+                errorText: _errors[6], // show error if any
+                errorStyle: const TextStyle(color: Colors.redAccent),
                 enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.white30),
                 ),
@@ -373,14 +571,20 @@ class _AddProductFormState extends State<AddProductForm> {
                   borderSide: BorderSide(color: Color(0xFFEDFF00)),
                 ),
               ),
+              onChanged: (_) => setState(() => _errors[6] = null),
             ),
             // Quantity field
             TextField(
               controller: _quantityController,
+              focusNode: _focusNodes[7], // index 7 = quantity
+              textInputAction: TextInputAction.done, // move to next field
+              onSubmitted: (_) => _saveProduct(),
               style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Quantity',
                 labelStyle: TextStyle(color: Colors.white70),
+                errorText: _errors[7], // show error if any
+                errorStyle: const TextStyle(color: Colors.redAccent),
                 enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.white30),
                 ),
@@ -388,6 +592,7 @@ class _AddProductFormState extends State<AddProductForm> {
                   borderSide: BorderSide(color: Color(0xFFEDFF00)),
                 ),
               ),
+              onChanged: (_) => setState(() => _errors[7] = null),
             ),
             const SizedBox(height: 24),
             SizedBox(
