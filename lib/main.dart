@@ -1,4 +1,4 @@
-import 'package:csoles_application/screens/owner_dashboard_screen.dart';
+import 'package:csoles_application/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart'; // generated file
@@ -24,10 +24,9 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       initialRoute: '/',
       routes: {
-        '/': (context) =>
-            const DashboardScreen(), // Changed to DashboardScreen Temporarily
+        '/': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
-        '/home': (context) => const LoginScreen(),
+        '/home': (context) => const HomeScreen(),
       },
     );
   }
