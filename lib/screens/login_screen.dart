@@ -25,8 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // Show success modal before navigating home
-  void _showSuccessModal() {
+ void _showSuccessModal() {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -58,10 +57,15 @@ class _LoginScreenState extends State<LoginScreen> {
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.pop(ctx); // Close dialog
-                  Navigator.pushReplacementNamed(
-                    context,
-                    '/home',
-                  ); // Navigate to home
+                  
+                  // Check if we can pop back (came from HomeScreen/DashboardScreen)
+                  // If yes, return true to indicate successful login
+                  // If no, navigate to home using named route
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context, true); // Return to previous screen with result = true
+                  } else {
+                    Navigator.pushReplacementNamed(context, '/home'); // Navigate to home
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFEDFF00),

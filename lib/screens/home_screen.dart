@@ -5,6 +5,7 @@ import 'me_screen.dart';
 import 'notifications_screen.dart';
 import 'chats_screen.dart';
 import 'product_detail_screen.dart';
+import 'login_screen.dart';
 
 /// Main home screen widget that displays products and handles navigation
 /// Features: Auto-rotating hero banner, product grid, bottom navigation, drawer menu
@@ -26,6 +27,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Global key to programmatically control the drawer from custom top bar
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  /// Tracks user authentication status
+  bool _isLoggedIn = false; // TODO: Replace with actual auth state management
 
   // ─── DEMO DATA ─────────────────────────────────────────────
 
@@ -114,6 +118,92 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _startHeroTimer();
+    _checkAuthStatus(); // Check login status on init
+  }
+
+  /// Check user authentication status
+  /// TODO: Replace with actual auth state check (e.g., from SharedPreferences, Provider, etc.)
+  void _checkAuthStatus() {
+    // Example: Check if user token exists
+    // final prefs = await SharedPreferences.getInstance();
+    // setState(() {
+    //   _isLoggedIn = prefs.getString('user_token') != null;
+    // });
+    
+    setState(() {
+      _isLoggedIn = false; // Default to logged out
+    });
+  }
+
+  /// Handle user login
+  void _handleLogin() {
+    // Navigate to login screen
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+    ).then((result) {
+      // If login was successful, update state
+      if (result == true) {
+        setState(() => _isLoggedIn = true);
+      }
+    });
+  }
+
+  /// Handle user logout
+  void _handleLogout() {
+    // Show confirmation dialog before logout
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: const Text(
+          'Logout',
+          style: TextStyle(
+            fontFamily: 'kobe11Bold',
+            color: Colors.white,
+          ),
+        ),
+        content: const Text(
+          'Are you sure you want to logout?',
+          style: TextStyle(
+            fontFamily: 'kobe11',
+            color: Colors.white,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color(0xFFEDFF00)),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              
+              // Clear session data
+              // TODO: Clear SharedPreferences, tokens, etc.
+              // Example:
+              // final prefs = await SharedPreferences.getInstance();
+              // await prefs.clear();
+              
+              setState(() => _isLoggedIn = false);
+              
+              // Navigate to login screen
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+              );
+              
+              debugPrint("User logged out");
+            },
+            child: const Text(
+              'Logout',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Starts a periodic timer that cycles through hero images every 5 seconds
@@ -210,17 +300,30 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // Logout menu item (placeholder functionality)
+            // Login/Logout menu item (conditional based on auth state)
             InkWell(
               onTap: () {
-                // Should clear user session, tokens, and navigate to login
-                debugPrint("Pressed the Log out!");
+                Navigator.of(context).pop(); // Close drawer first
+                
+                if (_isLoggedIn) {
+                  // Handle logout
+                  _handleLogout();
+                } else {
+                  // Handle login - navigate to login screen
+                  _handleLogin();
+                }
               },
-              child: const ListTile(
-                leading: Icon(Icons.logout, color: Colors.white),
+              child: ListTile(
+                leading: Icon(
+                  _isLoggedIn ? Icons.logout : Icons.login,
+                  color: Colors.white,
+                ),
                 title: Text(
-                  "Logout",
-                  style: TextStyle(fontFamily: 'kobe11', color: Colors.white),
+                  _isLoggedIn ? "Logout" : "Login",
+                  style: const TextStyle(
+                    fontFamily: 'kobe11',
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
