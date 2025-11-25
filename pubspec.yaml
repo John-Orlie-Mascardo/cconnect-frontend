@@ -39,6 +39,7 @@ dependencies:
   firebase_auth: ^6.1.2 #Firebase authentication dependency
   cloud_firestore: ^6.1.0 #Firebase Firestore dependency
   http: ^1.2.2 # for sending data to your Node backend
+  google_sign_in: ^6.2.1 # Google Sign-In for authentication
 
 dev_dependencies:
   flutter_test:

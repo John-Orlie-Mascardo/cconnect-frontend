@@ -281,6 +281,75 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // Google Sign-In implementation using Firebase popup (better for web)
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+
+    // Show loading modal
+    _showLoadingModal('Signing in with Google...');
+
+    try {
+      // Create Google Auth Provider
+      final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+      
+      // Add scopes if needed
+      googleProvider.addScope('email');
+      googleProvider.addScope('profile');
+
+      // Sign in with popup (works better on web than google_sign_in package)
+      UserCredential userCred = await FirebaseAuth.instance.signInWithPopup(googleProvider);
+
+      // Get Firebase token
+      final token = await userCred.user?.getIdToken();
+
+      // Send token to backend
+      final res = await http.post(
+        Uri.parse('http://localhost:3000/api/user/login'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({}),
+      );
+
+      // Close loading modal
+      if (mounted) Navigator.pop(context);
+
+      if (res.statusCode == 200) {
+        setState(() => _isLoading = false);
+        if (mounted) {
+          // Show success modal and navigate to home
+          _showSuccessModal();
+        }
+      } else {
+        setState(() {
+          _errorMessage = 'Login failed. Please try again.';
+          _isLoading = false;
+        });
+      }
+    } on FirebaseAuthException catch (e) {
+      // Close loading modal
+      if (mounted) Navigator.pop(context);
+
+      setState(() {
+        _isLoading = false;
+        if (e.code == 'popup-closed-by-user') {
+          _errorMessage = null; // User cancelled, don't show error
+        } else {
+          _errorMessage = 'Google Sign-In failed: ${e.message}';
+        }
+      });
+    } catch (e) {
+      // Close loading modal
+      if (mounted) Navigator.pop(context);
+
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'An error occurred. Please try again.';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -493,22 +562,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: double.infinity,
                   height: 50,
                   child: OutlinedButton.icon(
-                    onPressed: () {
-                      // TODO: Implement Google Sign-In
-                      // 1. Import google_sign_in package
-                      // 2. Call GoogleSignIn().signIn() to get Google account
-                      // 3. Get authentication credentials from Google account
-                      // 4. Sign in to Firebase using those credentials
-                      // 5. Get Firebase token and send to backend
-                      // 6. On success, show success modal and navigate to home
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Google Sign-In coming soon'),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                    },
+                    onPressed: _isLoading ? null : _signInWithGoogle,
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.white30),
                       shape: RoundedRectangleBorder(
