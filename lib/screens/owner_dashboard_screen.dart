@@ -4,6 +4,7 @@ import 'me_screen.dart';
 import 'notifications_screen.dart';
 import 'chats_screen.dart';
 import 'products_management_screen.dart';
+import 'login_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -14,6 +15,101 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  
+  /// Tracks user authentication status
+  bool _isLoggedIn = false; // TODO: Replace with actual auth state management
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthStatus(); // Check login status on init
+  }
+
+  /// Check user authentication status
+  /// TODO: Replace with actual auth state check (e.g., from SharedPreferences, Provider, etc.)
+  void _checkAuthStatus() {
+    // Example: Check if user token exists
+    // final prefs = await SharedPreferences.getInstance();
+    // setState(() {
+    //   _isLoggedIn = prefs.getString('user_token') != null;
+    // });
+    
+    setState(() {
+      _isLoggedIn = false; // Default to logged out
+    });
+  }
+
+  /// Handle user login
+  void _handleLogin() {
+    // Navigate to login screen
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+    ).then((result) {
+      // If login was successful, update state
+      if (result == true) {
+        setState(() => _isLoggedIn = true);
+      }
+    });
+  }
+
+  /// Handle user logout
+  void _handleLogout() {
+    // Show confirmation dialog before logout
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text(
+          'Logout',
+          style: TextStyle(
+            fontFamily: 'kobe11',
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        content: const Text(
+          'Are you sure you want to logout?',
+          style: TextStyle(
+            fontFamily: 'kobe11',
+            color: Colors.white,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color(0xFFEDFF00)),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              
+              // Clear session data
+              // TODO: Clear SharedPreferences, tokens, etc.
+              // Example:
+              // final prefs = await SharedPreferences.getInstance();
+              // await prefs.clear();
+              
+              setState(() => _isLoggedIn = false);
+              
+              // Navigate to login screen
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+              );
+              
+              debugPrint("User logged out");
+            },
+            child: const Text(
+              'Logout',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +168,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 leading: Icon(Icons.notifications_none, color: Colors.white),
                 title: Text(
                   "Notifications",
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(fontFamily: 'kobe11', color: Colors.white),
                 ),
               ),
             ),
@@ -87,18 +183,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
               },
               child: const ListTile(
                 leading: Icon(Icons.chat_bubble_outline, color: Colors.white),
-                title: Text("Messages", style: TextStyle(color: Colors.white)),
+                title: Text(
+                  "Messages",
+                  style: TextStyle(fontFamily: 'kobe11', color: Colors.white),
+                ),
               ),
             ),
 
-            // Action Item: Logout (Currently a placeholder)
+            // Login/Logout menu item (conditional based on auth state)
             InkWell(
               onTap: () {
-                debugPrint("Pressed the Log out!");
+                Navigator.of(context).pop(); // Close drawer first
+                
+                if (_isLoggedIn) {
+                  // Handle logout
+                  _handleLogout();
+                } else {
+                  // Handle login - navigate to login screen
+                  _handleLogin();
+                }
               },
-              child: const ListTile(
-                leading: Icon(Icons.logout, color: Colors.white),
-                title: Text("Logout", style: TextStyle(color: Colors.white)),
+              child: ListTile(
+                leading: Icon(
+                  _isLoggedIn ? Icons.logout : Icons.login,
+                  color: Colors.white,
+                ),
+                title: Text(
+                  _isLoggedIn ? "Logout" : "Login",
+                  style: const TextStyle(
+                    fontFamily: 'kobe11',
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
           ],
