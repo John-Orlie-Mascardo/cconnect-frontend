@@ -10,8 +10,12 @@ class CartManager {
 
   List<Map<String, dynamic>> get items => _items;
 
-  void addItem(Map<String, dynamic> item) {
+  bool addItem(Map<String, dynamic> item) {
+    if (_items.length >= 10) {
+      return false;
+    }
     _items.add(item);
+    return true;
   }
 
   void removeItem(int index) {

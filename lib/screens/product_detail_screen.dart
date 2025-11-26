@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'cart_screen.dart';
 import 'me_screen.dart';
 import '../services/cart_manager.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'login_screen.dart';
 
 /// Product detail screen showing full product information
 /// Features: Image gallery, size selection, add to cart, wishlist, chat, tabs
@@ -30,6 +32,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   /// Available shoe sizes
   final List<int> _sizes = [4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+  /// Unavailable shoe sizes (simulated)
+  final List<int> _unavailableSizes = [];
 
   /// Currently selected tab (0=Description, 1=Materials, 2=Condition)
   int _selectedTab = 0;
@@ -66,6 +71,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   /// Handle add to cart
   void _addToCart() {
+    // Check if user is logged in
+    if (FirebaseAuth.instance.currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please login to add items to cart'),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      // Optional: Navigate to login screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+      return;
+    }
+
     if (_selectedSize == null) {
       // Show snackbar if no size selected
       ScaffoldMessenger.of(context).showSnackBar(
@@ -79,13 +101,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
 
     // Add to Cart Manager
-    CartManager.instance.addItem({
+    final success = CartManager.instance.addItem({
       'title': widget.productTitle,
       'price': widget.productPrice,
       'image': widget.productImage,
       'size': _selectedSize,
       'qty': 1,
     });
+
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cart is full'),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
 
     // Show success message
     ScaffoldMessenger.of(context).showSnackBar(
@@ -252,26 +285,33 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                         const SizedBox(height: 12),
 
+
                         // Size Selection Grid
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
                           children: _sizes.map((size) {
                             final isSelected = _selectedSize == size;
+                            final isAvailable = !_unavailableSizes.contains(size);
+
                             return GestureDetector(
-                              onTap: () => _selectSize(size),
+                              onTap: isAvailable ? () => _selectSize(size) : null,
                               child: Container(
                                 width: 60,
                                 height: 40,
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? Color(0xFFEDFF00)
-                                      : Colors.grey[800],
+                                      ? const Color(0xFFEDFF00)
+                                      : isAvailable
+                                          ? Colors.grey[800]
+                                          : Colors.grey[900], // Darker for unavailable
                                   borderRadius: BorderRadius.circular(4),
                                   border: Border.all(
                                     color: isSelected
-                                        ? Color(0xFFEDFF00)
-                                        : Colors.grey[700]!,
+                                        ? const Color(0xFFEDFF00)
+                                        : isAvailable
+                                            ? Colors.grey[700]!
+                                            : Colors.grey[850]!, // Dimmer border
                                     width: isSelected ? 2 : 1,
                                   ),
                                 ),
@@ -286,7 +326,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                           : FontWeight.normal,
                                       color: isSelected
                                           ? Colors.black
-                                          : Colors.white,
+                                          : isAvailable
+                                              ? Colors.white
+                                              : Colors.white24, // Dimmed text
+                                      decoration: isAvailable
+                                          ? null
+                                          : TextDecoration.lineThrough, // Optional: strike-through
                                     ),
                                   ),
                                 ),

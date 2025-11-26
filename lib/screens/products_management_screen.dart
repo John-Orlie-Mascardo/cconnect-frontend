@@ -66,8 +66,14 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
             title: const Text('Remove product?'),
             content: const Text('This will mark the product as removed (soft delete).'),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-              TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Remove')),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Remove', style: TextStyle(color: Colors.redAccent)),
+              ),
             ],
           ),
         ) ??
@@ -105,8 +111,14 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Save')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Save', style: TextStyle(color: Color(0xFFEDFF00))),
+          ),
         ],
       ),
     );
@@ -241,13 +253,19 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
                                               children: [
                                                 ElevatedButton(
                                                   onPressed: () => _showEditDialog(p),
-                                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey),
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: const Color(0xFFEDFF00),
+                                                    foregroundColor: Colors.black,
+                                                  ),
                                                   child: const Text('Update'),
                                                 ),
                                                 const SizedBox(width: 8),
                                                 ElevatedButton(
                                                   onPressed: () => _deleteProduct(p['_id']?.toString() ?? p['id']?.toString() ?? ''),
-                                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent),
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: Colors.grey[800],
+                                                    foregroundColor: Colors.white,
+                                                  ),
                                                   child: const Text('Remove'),
                                                 ),
                                               ],

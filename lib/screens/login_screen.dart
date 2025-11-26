@@ -367,8 +367,6 @@ class _LoginScreenState extends State<LoginScreen> {
           padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
-            autovalidateMode:
-                AutovalidateMode.onUserInteraction, // removes error messages
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -423,6 +421,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // Email field
                 TextFormField(
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   controller: _emailCtrl,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
@@ -457,6 +456,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   alignment: Alignment.centerRight,
                   children: [
                     TextFormField(
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
                       controller: _passwordCtrl,
                       obscureText: !_isPasswordVisible,
                       textInputAction: TextInputAction.done,

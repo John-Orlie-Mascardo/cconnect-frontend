@@ -184,27 +184,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-            // Login/Logout menu item (conditional based on auth state)
+            // Logout menu item
             InkWell(
               onTap: () {
                 Navigator.of(context).pop(); // Close drawer first
-
-                if (_isLoggedIn) {
-                  // Handle logout
-                  _handleLogout();
-                } else {
-                  // Handle login - navigate to login screen
-                  _handleLogin();
-                }
+                _handleLogout();
               },
-              child: ListTile(
+              child: const ListTile(
                 leading: Icon(
-                  _isLoggedIn ? Icons.logout : Icons.login,
+                  Icons.logout,
                   color: Colors.white,
                 ),
                 title: Text(
-                  _isLoggedIn ? "Logout" : "Login",
-                  style: const TextStyle(
+                  "Logout",
+                  style: TextStyle(
                     fontFamily: 'kobe11',
                     color: Colors.white,
                   ),
