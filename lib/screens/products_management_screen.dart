@@ -98,17 +98,69 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
   Future<void> _showEditDialog(Map<String, dynamic> product) async {
     final qtyCtrl = TextEditingController(text: product['quantity']?.toString() ?? '0');
     final condCtrl = TextEditingController(text: product['condition']?.toString() ?? '');
+    final priceCtrl = TextEditingController(text: product['price']?.toString() ?? '0');
+    final matCtrl = TextEditingController(text: product['materials']?.toString() ?? '');
+    final descCtrl = TextEditingController(text: product['description']?.toString() ?? '');
 
     final res = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Update product'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: qtyCtrl, decoration: const InputDecoration(labelText: 'Quantity')),
-            TextField(controller: condCtrl, decoration: const InputDecoration(labelText: 'Condition')),
-          ],
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text('Update product', style: TextStyle(color: Colors.white)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: priceCtrl,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'Price',
+                  labelStyle: TextStyle(color: Colors.white70),
+                  enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                ),
+              ),
+              TextField(
+                controller: qtyCtrl,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'Quantity',
+                  labelStyle: TextStyle(color: Colors.white70),
+                  enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                ),
+              ),
+              TextField(
+                controller: condCtrl,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'Condition',
+                  labelStyle: TextStyle(color: Colors.white70),
+                  enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                ),
+              ),
+              TextField(
+                controller: matCtrl,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'Materials',
+                  labelStyle: TextStyle(color: Colors.white70),
+                  enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                ),
+              ),
+              TextField(
+                controller: descCtrl,
+                style: const TextStyle(color: Colors.white),
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  labelStyle: TextStyle(color: Colors.white70),
+                  enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -132,8 +184,11 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
     try {
       final uri = Uri.parse('$kApiBaseUrl/products/$id');
       final body = {
+        'price': double.tryParse(priceCtrl.text) ?? 0.0,
         'quantity': int.tryParse(qtyCtrl.text) ?? 0,
         'condition': condCtrl.text,
+        'materials': matCtrl.text,
+        'description': descCtrl.text,
       };
       final resp = await http.put(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode(body));
       if (resp.statusCode >= 200 && resp.statusCode < 300) {
@@ -213,8 +268,9 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
                             itemBuilder: (context, index) {
                               final p = _products[index];
                               final imageName = p['image'] as String?;
+                              // Backend now returns full path like /uploads/filename.jpg
                               final imageUrl = (imageName != null && imageName.isNotEmpty)
-                                  ? '${kApiBaseUrl.replaceAll('/api', '')}/uploads/$imageName'
+                                  ? '${kApiBaseUrl.replaceAll('/api', '')}$imageName'
                                   : null;
 
                               return Card(

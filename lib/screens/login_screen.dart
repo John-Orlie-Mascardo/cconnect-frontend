@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
+import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -25,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _showSuccessModal() {
+  void _showSuccessModal(String role) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -58,19 +59,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: () {
                   Navigator.pop(ctx); // Close dialog
 
-                  // Check if we can pop back (came from HomeScreen/DashboardScreen)
-                  // If yes, return true to indicate successful login
-                  // If no, navigate to home using named route
-                  if (Navigator.canPop(context)) {
-                    Navigator.pop(
-                      context,
-                      true,
-                    ); // Return to previous screen with result = true
+                  if (role == 'admin') {
+                    Navigator.pushReplacementNamed(context, '/admin');
                   } else {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      '/home',
-                    ); // Navigate to home
+                    Navigator.pushReplacementNamed(context, '/home');
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -251,10 +243,19 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) Navigator.pop(context);
 
       if (res.statusCode == 200) {
+        final Map<String, dynamic> body = jsonDecode(res.body);
+        print('LOGIN RESPONSE BODY: $body'); // DEBUG
+        
+        // Check for role at root level OR inside user object
+        final String role = body['role'] ?? body['user']?['role'] ?? 'user';
+        
+        print('PARSED ROLE: $role'); // DEBUG
+        await AuthService.saveRole(role);
+
         setState(() => _isLoading = false);
         if (mounted) {
           // Show success modal
-          _showSuccessModal();
+          _showSuccessModal(role);
         }
       } else {
         setState(() {
@@ -324,10 +325,17 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) Navigator.pop(context);
 
       if (res.statusCode == 200) {
+        final Map<String, dynamic> body = jsonDecode(res.body);
+        
+        // Check for role at root level OR inside user object
+        final String role = body['role'] ?? body['user']?['role'] ?? 'user';
+        
+        await AuthService.saveRole(role);
+
         setState(() => _isLoading = false);
         if (mounted) {
           // Show success modal and navigate to home
-          _showSuccessModal();
+          _showSuccessModal(role);
         }
       } else {
         setState(() {

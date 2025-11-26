@@ -8,6 +8,8 @@ import 'chats_screen.dart';
 import 'product_detail_screen.dart';
 import 'login_screen.dart';
 import 'settings_screen.dart';
+import '../models/product.dart';
+import '../services/product_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,39 +28,9 @@ class _HomeScreenState extends State<HomeScreen> {
   // Tracks user authentication status
   bool _isLoggedIn = false;
 
-  // ─── DEMO DATA ─────────────────────────────────────────────
-  final List<Map<String, String?>> demoProducts = [
-    {
-      'title': 'Joshua Shoes',
-      'price': '₱69,420',
-      'image': 'assets/images/prod_item.jpg',
-    },
-    {
-      'title': 'Joshua Feet',
-      'price': '₱59,300',
-      'image': 'assets/images/prod_item2.jpg',
-    },
-    {
-      'title': 'Joshua Socks',
-      'price': '₱75,150',
-      'image': 'assets/images/prod_item3.jpg',
-    },
-    {
-      'title': 'Ken Crocs',
-      'price': '₱82,500',
-      'image': 'assets/images/prod_item4.jpg',
-    },
-    {
-      'title': 'Orlie Slippers',
-      'price': '₱45,200',
-      'image': 'assets/images/prod_item5.jpg',
-    },
-    {
-      'title': 'James Heels',
-      'price': '₱90,750',
-      'image': 'assets/images/prod_item6.jpg',
-    },
-  ];
+  // ─── PRODUCT DATA ─────────────────────────────────────────────
+  List<Product> products = [];
+  bool _isLoadingProducts = true;
 
   final List<String> _heroImages = [
     'assets/images/feature_test.jpg',
@@ -84,13 +56,11 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _navigateToProductDetail(Map<String, String?> product) {
+  void _navigateToProductDetail(Product product) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ProductDetailScreen(
-          productTitle: product['title'] ?? 'Product',
-          productPrice: product['price'] ?? '₱0',
-          productImage: product['image'],
+          product: product,
         ),
       ),
     );
@@ -105,6 +75,26 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _startHeroTimer();
     _checkAuthStatus(); // Check login status immediately on load
+    _loadProducts(); // Load products from API
+  }
+
+  /// Load products from the API
+  Future<void> _loadProducts() async {
+    try {
+      setState(() => _isLoadingProducts = true);
+      final fetchedProducts = await ProductService.getProducts();
+      if (mounted) {
+        setState(() {
+          products = fetchedProducts;
+          _isLoadingProducts = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading products: $e');
+      if (mounted) {
+        setState(() => _isLoadingProducts = false);
+      }
+    }
   }
 
   /// REAL AUTH CHECK: Checks if a Firebase user is currently signed in
@@ -432,27 +422,60 @@ class _HomeScreenState extends State<HomeScreen> {
                         horizontal: 12.0,
                         vertical: 14.0,
                       ),
-                      child: GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: demoProducts.length,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 20,
-                              childAspectRatio: 0.72,
-                            ),
-                        itemBuilder: (context, index) {
-                          final product = demoProducts[index];
-                          return ProductCard(
-                            title: product['title'] ?? '',
-                            price: product['price'] ?? '',
-                            imageUrl: product['image'],
-                            onTap: () => _navigateToProductDetail(product),
-                          );
-                        },
-                      ),
+                      child: _isLoadingProducts
+                          ? const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(32.0),
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFFEDFF00),
+                                ),
+                              ),
+                            )
+                          : products.isEmpty
+                              ? Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(32.0),
+                                    child: Text(
+                                      'No products available',
+                                      style: TextStyle(
+                                        fontFamily: 'kobe11',
+                                        color: Colors.grey[400],
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: products.length,
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 2,
+                                        crossAxisSpacing: 12,
+                                        mainAxisSpacing: 20,
+                                        childAspectRatio: 0.72,
+                                      ),
+                                  itemBuilder: (context, index) {
+                                    final product = products[index];
+                                    // Construct image URL properly
+                                    String? imageUrl;
+                                    if (product.image != null) {
+                                      // Ensure there's a slash between base URL and path
+                                      final imagePath = product.image!.startsWith('/') 
+                                          ? product.image! 
+                                          : '/${product.image!}';
+                                      imageUrl = 'http://localhost:3000$imagePath';
+                                    }
+                                    
+                                    return ProductCard(
+                                      title: product.name,
+                                      price: '₱${product.price.toStringAsFixed(2)}',
+                                      imageUrl: imageUrl,
+                                      onTap: () => _navigateToProductDetail(product),
+                                    );
+                                  },
+                                ),
                     ),
                   ],
                 ),
@@ -525,7 +548,39 @@ class ProductCard extends StatelessWidget {
                     )
                   : ClipRRect(
                       borderRadius: BorderRadius.circular(6),
-                      child: Image.asset(imageUrl!, fit: BoxFit.cover),
+                      child: imageUrl!.startsWith('http')
+                          ? Image(
+                              image: NetworkImage(imageUrl!),
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress.cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
+                                    color: const Color(0xFFEDFF00),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                print('Image load error: $error');
+                                return Container(
+                                  color: Colors.grey[800],
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.broken_image,
+                                      color: Colors.white54,
+                                      size: 40,
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                          : Image.asset(imageUrl!, fit: BoxFit.cover),
                     ),
             ),
           ),

@@ -3,6 +3,8 @@ import 'cart_screen.dart';
 import 'my_purchases_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
+import '../services/auth_service.dart';
+import 'products_management_screen.dart';
 
 class MeScreen extends StatelessWidget {
   const MeScreen({super.key});
@@ -75,202 +77,272 @@ class MeScreen extends StatelessWidget {
             }
 
             // If user IS logged in, show the profile content
-            return SingleChildScrollView(
-              child: Column(
-                children: [
-                  // ─── TOP BAR NAVIGATION & BRANDING ────────────────────────────────
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    child: Row(
-                      children: [
-                        InkWell(
-                          onTap: () =>
-                              Navigator.pushReplacementNamed(context, '/home'),
-                          borderRadius: BorderRadius.circular(40),
-                          child: Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(shape: BoxShape.circle),
-                            child: const Icon(
-                              Icons.arrow_back,
-                              color: Colors.white,
-                              size: 24,
+            return FutureBuilder<String?>(
+              future: AuthService.getRole(),
+              builder: (context, roleSnapshot) {
+                final role = roleSnapshot.data;
+                
+                return SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // ─── TOP BAR NAVIGATION & BRANDING ────────────────────────────────
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        child: Row(
+                          children: [
+                            InkWell(
+                              onTap: () =>
+                                  Navigator.pushReplacementNamed(context, '/home'),
+                              borderRadius: BorderRadius.circular(40),
+                              child: Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(shape: BoxShape.circle),
+                                child: const Icon(
+                                  Icons.arrow_back,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        const Spacer(),
+                            const SizedBox(width: 16),
+                            const Spacer(),
 
-                        // Brand Logo: Displayed on the far right of the top bar
-                        Image.asset(
-                          'assets/images/logo.png',
-                          color: Colors.white,
-                          width: 90,
-                          height: 90,
-                          fit: BoxFit.contain,
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // ─── SCROLLABLE CONTENT ───────────────────────────────────────────
-                  // ─── USER PROFILE HEADER ──────────────────────────────────
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Row(
-                      children: [
-                        // User Avatar: Circular placeholder for profile image
-                        Container(
-                          width: 110,
-                          height: 110,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[800],
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.person,
-                            size: 64,
-                            color: Colors.white70,
-                          ),
-                        ),
-                        const SizedBox(width: 24),
-                        // User Name: Displays the current user's display name
-                        const Expanded(
-                          child: Text(
-                            'BIG SHOE JOE',
-                            style: TextStyle(
+                            // Brand Logo: Displayed on the far right of the top bar
+                            Image.asset(
+                              'assets/images/logo.png',
                               color: Colors.white,
-                              fontFamily: 'kobe11',
-                              fontSize: 26,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1.5,
+                              width: 90,
+                              height: 90,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => const SizedBox(),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Visual Divider
-                  Container(height: 1, color: Colors.white24),
-
-                  // ─── PURCHASE HISTORY LINK ────────────────────────────────
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const MyPurchasesScreen(),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      color: Colors.black,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 16,
                       ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'My Purchases',
-                            style: TextStyle(
-                              fontFamily: 'kobe11',
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white,
+
+                      // ─── SCROLLABLE CONTENT ───────────────────────────────────────────
+                      // ─── USER PROFILE HEADER ──────────────────────────────────
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Row(
+                          children: [
+                            // User Avatar: Circular placeholder for profile image
+                            Container(
+                              width: 110,
+                              height: 110,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[800],
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.person,
+                                size: 64,
+                                color: Colors.white70,
+                              ),
+                            ),
+                            const SizedBox(width: 24),
+                            // User Name: Displays the current user's display name
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'BIG SHOE JOE',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontFamily: 'kobe11',
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 1.5,
+                                    ),
+                                  ),
+                                  if (role == 'admin')
+                                    Container(
+                                      margin: const EdgeInsets.only(top: 8),
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFEDFF00),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: const Text(
+                                        'ADMIN',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Visual Divider
+                      Container(height: 1, color: Colors.white24),
+                      
+                      // ─── ADMIN SECTION ────────────────────────────────────────
+                      if (role == 'admin')
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ProductsManagementScreen(),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            color: Colors.black,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 16,
+                            ),
+                            child: Row(
+                              children: const [
+                                Icon(Icons.admin_panel_settings, color: Color(0xFFEDFF00)),
+                                SizedBox(width: 16),
+                                Text(
+                                  'Manage Products',
+                                  style: TextStyle(
+                                    fontFamily: 'kobe11',
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFFEDFF00),
+                                  ),
+                                ),
+                                Spacer(),
+                                Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
+                              ],
                             ),
                           ),
-                          Text(
-                            'View Purchase History',
-                            style: TextStyle(
-                              fontFamily: 'kobe11',
-                              fontSize: 16,
-                              color: Colors.white70,
+                        ),
+                        
+                      if (role == 'admin')
+                        Container(height: 1, color: Colors.white24),
+
+                      // ─── PURCHASE HISTORY LINK ────────────────────────────────
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const MyPurchasesScreen(),
                             ),
+                          );
+                        },
+                        child: Container(
+                          color: Colors.black,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 16,
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'My Purchases',
+                                style: TextStyle(
+                                  fontFamily: 'kobe11',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              Text(
+                                'View Purchase History',
+                                style: TextStyle(
+                                  fontFamily: 'kobe11',
+                                  fontSize: 16,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // ─── ORDER STATUS ICONS ───────────────────────────────────
+                      // Quick access to orders in different states
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: const [
+                            _StatusIcon(
+                              icon: Icons.payments_outlined,
+                              label: 'To pay',
+                            ),
+                            _StatusIcon(
+                              icon: Icons.local_shipping_outlined,
+                              label: 'To Ship',
+                            ),
+                            _StatusIcon(
+                              icon: Icons.inbox_outlined,
+                              label: 'To Receive',
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // ─── WISHLIST SECTION ─────────────────────────────────────
+
+                      // Wishlist Header Label
+                      Container(
+                        width: double.infinity,
+                        color: const Color(0xFF403636),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        child: const Text(
+                          "BIG SHOE JOE'S WISHLIST",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'kobe11',
+                            fontSize: 18,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ),
+
+                      // Wishlist Items List: Scrollable area for saved items
+                      ListView(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        children: const [
+                          WishlistItem(
+                            title: 'JOSHUA SHOES',
+                            description:
+                                'lorem ipsum\ndetails details\nskibidi rizz',
+                            price: '₱420.69',
+                          ),
+                          SizedBox(height: 16),
+                          WishlistItem(
+                            title: 'JAMES SHOES',
+                            description:
+                                'lorem ipsum\ndetails details\nskibidi rizz',
+                            price: '₱420.69',
                           ),
                         ],
                       ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // ─── ORDER STATUS ICONS ───────────────────────────────────
-                  // Quick access to orders in different states
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: const [
-                        _StatusIcon(
-                          icon: Icons.payments_outlined,
-                          label: 'To pay',
-                        ),
-                        _StatusIcon(
-                          icon: Icons.local_shipping_outlined,
-                          label: 'To Ship',
-                        ),
-                        _StatusIcon(
-                          icon: Icons.inbox_outlined,
-                          label: 'To Receive',
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ─── WISHLIST SECTION ─────────────────────────────────────
-
-                  // Wishlist Header Label
-                  Container(
-                    width: double.infinity,
-                    color: const Color(0xFF403636),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    child: const Text(
-                      "BIG SHOE JOE'S WISHLIST",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontFamily: 'kobe11',
-                        fontSize: 18,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                  ),
-
-                  // Wishlist Items List: Scrollable area for saved items
-                  ListView(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                    children: const [
-                      WishlistItem(
-                        title: 'JOSHUA SHOES',
-                        description:
-                            'lorem ipsum\ndetails details\nskibidi rizz',
-                        price: '₱420.69',
-                      ),
-                      SizedBox(height: 16),
-                      WishlistItem(
-                        title: 'JAMES SHOES',
-                        description:
-                            'lorem ipsum\ndetails details\nskibidi rizz',
-                        price: '₱420.69',
-                      ),
                     ],
                   ),
-                ],
-              ),
+                );
+              },
             );
           },
         ),

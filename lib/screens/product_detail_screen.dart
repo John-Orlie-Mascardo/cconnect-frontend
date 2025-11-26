@@ -6,18 +6,16 @@ import '../services/cart_manager.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
 
+import '../models/product.dart';
+
 /// Product detail screen showing full product information
 /// Features: Image gallery, size selection, add to cart, wishlist, chat, tabs
 class ProductDetailScreen extends StatefulWidget {
-  final String productTitle;
-  final String productPrice;
-  final String? productImage;
+  final Product product;
 
   const ProductDetailScreen({
     super.key,
-    required this.productTitle,
-    required this.productPrice,
-    this.productImage,
+    required this.product,
   });
 
   @override
@@ -102,9 +100,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     // Add to Cart Manager
     final success = CartManager.instance.addItem({
-      'title': widget.productTitle,
-      'price': widget.productPrice,
-      'image': widget.productImage,
+      'title': widget.product.name,
+      'price': widget.product.price,
+      'image': widget.product.image,
       'size': _selectedSize,
       'qty': 1,
     });
@@ -124,7 +122,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Added ${widget.productTitle} (Size $_selectedSize) to cart!',
+          'Added ${widget.product.name} (Size $_selectedSize) to cart!',
           style: const TextStyle(color: Colors.black),
         ),
         backgroundColor: const Color(0xFFEDFF00),
@@ -196,31 +194,63 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     width: double.infinity,
                     height: 300,
                     color: Colors.grey[800],
-                    child: widget.productImage != null
-                        ? Image.asset(
-                            widget.productImage!,
+                    child: Builder(
+                      builder: (context) {
+                        final image = widget.product.image;
+                        if (image == null) {
+                          return const Center(
+                            child: Text(
+                              'video/pic showcasing\ngoods',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 16, color: Colors.white70),
+                            ),
+                          );
+                        }
+
+                        // Determine if it's a network image (http or relative path)
+                        final isNetwork = image.startsWith('http') || image.startsWith('/') || image.startsWith('uploads');
+                        
+                        if (isNetwork) {
+                          // Construct full URL if relative
+                          final imageUrl = image.startsWith('http') 
+                              ? image 
+                              : 'http://localhost:3000${image.startsWith('/') ? '' : '/'}$image';
+                              
+                          return Image(
+                            image: NetworkImage(imageUrl),
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                                  color: const Color(0xFFEDFF00),
+                                ),
+                              );
+                            },
+                            errorBuilder: (_, __, ___) => const Center(
+                              child: Icon(Icons.broken_image, color: Colors.white54, size: 50),
+                            ),
+                          );
+                        } else {
+                          // Fallback for local assets (if any)
+                          return Image.asset(
+                            image,
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => const Center(
                               child: Text(
                                 'video/pic showcasing\ngoods',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white70,
-                                ),
+                                style: TextStyle(fontSize: 16, color: Colors.white70),
                               ),
                             ),
-                          )
-                        : const Center(
-                            child: Text(
-                              'video/pic showcasing\ngoods',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white70,
-                              ),
-                            ),
-                          ),
+                          );
+                        }
+                      },
+                    ),
                   ),
 
                   // ─── PRODUCT INFO SECTION ──────────────────
@@ -234,7 +264,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           children: [
                             Expanded(
                               child: Text(
-                                widget.productTitle,
+                                widget.product.name,
                                 style: const TextStyle(
                                   fontFamily: 'kobe11Bold',
                                   fontWeight: FontWeight.bold,
@@ -261,7 +291,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                         // Price
                         Text(
-                          widget.productPrice,
+                          '₱${widget.product.price.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontFamily: 'kobe11Bold',
                             fontWeight: FontWeight.bold,
@@ -502,9 +532,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _buildTabContent() {
     switch (_selectedTab) {
       case 0: // Description
-        return const Text(
-          'Shoe worn by Tosen Jordan through thick and thin, through rain and shine, in sickness and in health; will you love, honor and cherish this shoe for as long as you both live?',
-          style: TextStyle(
+        return Text(
+          widget.product.description ?? 'No description available.',
+          style: const TextStyle(
             fontFamily: 'kobe11',
             fontSize: 14,
             color: Colors.white70,
@@ -512,9 +542,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         );
       case 1: // Materials
-        return const Text(
-          'Made with premium leather and synthetic materials. Features breathable mesh lining, rubber outsole for durability, and cushioned insole for comfort.',
-          style: TextStyle(
+        return Text(
+          widget.product.materials ?? 'Material information not available.',
+          style: const TextStyle(
             fontFamily: 'kobe11',
             fontSize: 14,
             color: Colors.white70,
@@ -522,9 +552,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         );
       case 2: // Condition
-        return const Text(
-          'Gently used. Shows minimal signs of wear. Sole has good tread remaining. No major scuffs or damage. Cleaned and ready to wear.',
-          style: TextStyle(
+        return Text(
+          widget.product.condition ?? 'Condition information not available.',
+          style: const TextStyle(
             fontFamily: 'kobe11',
             fontSize: 14,
             color: Colors.white70,

@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   // Replace with correct base depending on platform/test:
@@ -58,5 +59,26 @@ class AuthService {
     } catch (e) {
       return {'error': e.toString()};
     }
+  }
+  // ─── ROLE MANAGEMENT ───────────────────────────────────────
+
+  static const String _roleKey = 'user_role';
+
+  /// Save user role to local storage
+  static Future<void> saveRole(String role) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_roleKey, role);
+  }
+
+  /// Get user role from local storage
+  static Future<String?> getRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_roleKey);
+  }
+
+  /// Clear user role (logout)
+  static Future<void> clearRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_roleKey);
   }
 }
