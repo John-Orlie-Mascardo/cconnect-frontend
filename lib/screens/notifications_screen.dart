@@ -135,7 +135,7 @@ class NotificationScreen extends StatelessWidget {
         backgroundColor: Colors.black,
         currentIndex: 0, // Highlights the 'Home' tab by default for this view
         selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white70,
+        unselectedItemColor: Colors.grey,
         onTap: (index) {
           // Navigation Logic: Replaces the current route to avoid stacking navigation
           if (index == 0) {
@@ -157,15 +157,15 @@ class NotificationScreen extends StatelessWidget {
         },
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined, color: Colors.white),
+            icon: Icon(Icons.home_outlined),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart_outlined, color: Colors.white),
+            icon: Icon(Icons.shopping_cart_outlined),
             label: 'Cart',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline, color: Colors.white),
+            icon: Icon(Icons.person_outline),
             label: 'Me',
           ),
         ],

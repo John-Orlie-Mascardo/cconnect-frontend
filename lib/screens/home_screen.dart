@@ -68,17 +68,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ─── NAVIGATION LOGIC ──────────────────────────────────────
 
-  void _onNavTap(int index) {
+  Future<void> _onNavTap(int index) async {
     setState(() => _selectedIndex = index);
 
     if (index == 1) {
-      Navigator.of(
+      await Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => const CartScreen()));
+      if (mounted) setState(() => _selectedIndex = 0);
     } else if (index == 2) {
-      Navigator.of(
+      await Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => const MeScreen()));
+      if (mounted) setState(() => _selectedIndex = 0);
     }
   }
 
@@ -465,7 +467,7 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Colors.black,
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white70,
+        unselectedItemColor: Colors.grey,
         currentIndex: _selectedIndex,
         onTap: _onNavTap,
         items: const [

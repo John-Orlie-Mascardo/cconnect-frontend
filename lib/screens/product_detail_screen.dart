@@ -396,7 +396,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               backgroundColor: Colors.black,
               type: BottomNavigationBarType.fixed,
               selectedItemColor: Color.fromARGB(255, 255, 255, 255),
-              unselectedItemColor: Colors.white70,
+              unselectedItemColor: Colors.grey,
               currentIndex: 0,
               onTap: _onNavTap,
               elevation: 0,
