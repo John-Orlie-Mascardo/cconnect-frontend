@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'home_screen.dart';
 import 'package:http/http.dart' as http;
 
 class RegisterScreen extends StatefulWidget {
@@ -129,7 +128,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  // Show success modal and navigate to home screen
+  // Show success modal and navigate
   void _showSuccessDialog() {
     showDialog(
       context: context,
@@ -151,9 +150,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            // CHANGED: Update text since they don't need to log in anymore
             const Text(
-              'Account created successfully.',
+              'Account created successfully',
               style: TextStyle(color: Colors.white70, fontSize: 16),
               textAlign: TextAlign.center,
             ),
@@ -163,15 +161,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.pop(ctx); // Close dialog
-
-                  // CHANGED: Navigate to Home Screen
-                  // We use pushAndRemoveUntil to clear the back button history
-                  // so the user can't go back to the Register/Login screen
-                  Navigator.pushAndRemoveUntil(
+                  Navigator.pushReplacementNamed(
                     context,
-                    MaterialPageRoute(builder: (_) => const HomeScreen()), 
-                    (route) => false,
-                  );
+                    '/home',
+                  ); // Navigate to home
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFEDFF00),
@@ -180,9 +173,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                // CHANGED: Button text
                 child: const Text(
-                  'Continue to App',
+                  'Continue',
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 16,
@@ -206,6 +198,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
+            autovalidateMode:
+                AutovalidateMode.onUserInteraction, // removes error messages
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -317,8 +311,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Enter password';
-                        if (v.length < 6)
+                        if (v.length < 6) {
                           return 'Password must be at least 6 characters';
+                        }
                         return null;
                       },
                     ),
@@ -383,8 +378,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Confirm password';
-                        if (v != _passwordCtrl.text)
+                        if (v != _passwordCtrl.text) {
                           return 'Passwords do not match';
+                        }
                         return null;
                       },
                     ),

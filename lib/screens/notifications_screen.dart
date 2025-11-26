@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'cart_screen.dart';
 import 'me_screen.dart';
 import 'home_screen.dart';
-import 'chats_screen.dart';
 
 class NotificationScreen extends StatelessWidget {
   const NotificationScreen({super.key});
@@ -49,31 +48,6 @@ class NotificationScreen extends StatelessWidget {
                       fontFamily: 'kobe11',
                       fontSize: 26,
                       fontWeight: FontWeight.w500,
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  // Notification Icon: Visual indicator for the current screen (static)
-                  const Icon(
-                    Icons.notifications_none,
-                    size: 30,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(width: 8),
-
-                  // Chat Button: Navigates to the ChatsScreen
-                  InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const ChatsScreen()),
-                      );
-                    },
-                    child: const Icon(
-                      Icons.chat_bubble_outline,
-                      size: 28,
-                      color: Colors.white,
                     ),
                   ),
                 ],

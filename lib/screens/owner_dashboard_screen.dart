@@ -15,7 +15,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  
+
   /// Tracks user authentication status
   bool _isLoggedIn = false; // TODO: Replace with actual auth state management
 
@@ -33,7 +33,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // setState(() {
     //   _isLoggedIn = prefs.getString('user_token') != null;
     // });
-    
+
     setState(() {
       _isLoggedIn = false; // Default to logged out
     });
@@ -42,14 +42,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// Handle user login
   void _handleLogin() {
     // Navigate to login screen
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-    ).then((result) {
-      // If login was successful, update state
-      if (result == true) {
-        setState(() => _isLoggedIn = true);
-      }
-    });
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const LoginScreen()))
+        .then((result) {
+          // If login was successful, update state
+          if (result == true) {
+            setState(() => _isLoggedIn = true);
+          }
+        });
   }
 
   /// Handle user logout
@@ -69,10 +69,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         content: const Text(
           'Are you sure you want to logout?',
-          style: TextStyle(
-            fontFamily: 'kobe11',
-            color: Colors.white,
-          ),
+          style: TextStyle(fontFamily: 'kobe11', color: Colors.white),
         ),
         actions: [
           TextButton(
@@ -85,26 +82,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context); // Close dialog
-              
+
               // Clear session data
               // TODO: Clear SharedPreferences, tokens, etc.
               // Example:
               // final prefs = await SharedPreferences.getInstance();
               // await prefs.clear();
-              
+
               setState(() => _isLoggedIn = false);
-              
+
               // Navigate to login screen
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (_) => const LoginScreen()),
               );
-              
+
               debugPrint("User logged out");
             },
-            child: const Text(
-              'Logout',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('Logout', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -194,7 +188,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             InkWell(
               onTap: () {
                 Navigator.of(context).pop(); // Close drawer first
-                
+
                 if (_isLoggedIn) {
                   // Handle logout
                   _handleLogout();
@@ -309,16 +303,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: 'Orders',
                       count: '12', // Dynamic count placeholder
                       icon: Icons.inventory_2_outlined,
-                    ),
-                  ),
-
-                  // History Card: Displays past sales count
-                  InkWell(
-                    child: DashboardCard(
-                      width: cardWidth,
-                      title: 'Orders', // Label might need update to 'History'
-                      count: '12',
-                      icon: Icons.history,
                     ),
                   ),
                 ],

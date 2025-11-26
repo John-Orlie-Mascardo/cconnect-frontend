@@ -3,7 +3,6 @@ import 'package:image_picker/image_picker.dart'; // for image picking
 import 'dart:io'; // needed to display picked images
 import 'package:flutter/foundation.dart'
     show kIsWeb; // to check if running on web
-import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 // Use a runtime base URL so Android emulator uses 10.0.2.2 automatically.
@@ -25,7 +24,7 @@ class _AddProductFormState extends State<AddProductForm> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _productIDController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
-  final TextEditingController _sizeController = TextEditingController();
+  final List<int> _selectedSizes = []; // stores selected sizes
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _materialsController = TextEditingController();
   final TextEditingController _conditionController = TextEditingController();
@@ -37,7 +36,7 @@ class _AddProductFormState extends State<AddProductForm> {
   bool _isLoading = false; // loading state for save button
 
   // focus nodes for each field (if needed for advanced focus management)
-  final List<FocusNode> _focusNodes = List.generate(8, (_) => FocusNode());
+  final List<FocusNode> _focusNodes = List.generate(7, (_) => FocusNode());
 
   // error messages for each field (if needed for validation)
   final List<String?> _errors = List.filled(8, null);
@@ -97,7 +96,7 @@ class _AddProductFormState extends State<AddProductForm> {
         return null;
       }(),
       // 3: size
-      _sizeController.text.trim().isEmpty ? 'Size is required' : null,
+      _selectedSizes.isEmpty ? 'Please select at least one size' : null,
       // 4: description
       _descriptionController.text.trim().isEmpty
           ? 'Description is required'
@@ -169,11 +168,16 @@ class _AddProductFormState extends State<AddProductForm> {
     // Focus and scroll to first error if any
     if (firstErrorIndex != null) {
       setState(() {}); // Rebuild to show error messages
-      _focusNodes[firstErrorIndex].requestFocus();
+
+      // Only request focus if it's not the size field
+      if (firstErrorIndex != 3) {
+        _focusNodes[firstErrorIndex > 3 ? firstErrorIndex - 1 : firstErrorIndex]
+            .requestFocus();
+      }
 
       // Scroll to error field (estimate 80px per field)
       _scrollController.animateTo(
-        firstErrorIndex * 80.0,
+        250.0 + (firstErrorIndex * 80.0),
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
@@ -208,7 +212,7 @@ class _AddProductFormState extends State<AddProductForm> {
       request.fields['name'] = _nameController.text.trim();
       request.fields['productId'] = _productIDController.text.trim();
       request.fields['price'] = price.toString();
-      request.fields['size'] = _sizeController.text.trim();
+      request.fields['sizes'] = _selectedSizes.join(','); // Send as "7,8,9,10"
       request.fields['description'] = _descriptionController.text.trim();
       request.fields['materials'] = _materialsController.text.trim();
       request.fields['condition'] = _conditionController.text.trim();
@@ -345,7 +349,6 @@ class _AddProductFormState extends State<AddProductForm> {
     _nameController.dispose();
     _productIDController.dispose();
     _priceController.dispose();
-    _sizeController.dispose();
     _descriptionController.dispose();
     _materialsController.dispose();
     _conditionController.dispose();
@@ -426,6 +429,7 @@ class _AddProductFormState extends State<AddProductForm> {
               ),
             ),
             // Product Name field
+            SizedBox(height: 20),
             TextField(
               controller: _nameController,
               focusNode: _focusNodes[0], // index 0 = name
@@ -448,6 +452,7 @@ class _AddProductFormState extends State<AddProductForm> {
                   setState(() => _errors[0] = null), // clear error on change
             ),
             // Product ID field
+            SizedBox(height: 20),
             TextField(
               controller: _productIDController,
               focusNode: _focusNodes[1], // index 1 = product ID
@@ -469,6 +474,7 @@ class _AddProductFormState extends State<AddProductForm> {
               onChanged: (_) => setState(() => _errors[1] = null),
             ),
             // Price field
+            SizedBox(height: 20),
             TextField(
               controller: _priceController,
               focusNode: _focusNodes[2], // index 2 = price
@@ -489,33 +495,13 @@ class _AddProductFormState extends State<AddProductForm> {
               ),
               onChanged: (_) => setState(() => _errors[2] = null),
             ),
-            // Size field
-            TextField(
-              controller: _sizeController,
-              focusNode: _focusNodes[3], // index 3 = size
-              textInputAction: TextInputAction.next, // move to next field
-              onSubmitted: (_) => _focusNodes[4].requestFocus(),
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: 'Size',
-                labelStyle: TextStyle(color: Colors.white70),
-                errorText: _errors[3], // show error if any
-                errorStyle: const TextStyle(color: Colors.redAccent),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white30),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFFEDFF00)),
-                ),
-              ),
-              onChanged: (_) => setState(() => _errors[3] = null),
-            ),
             // Description field
+            SizedBox(height: 20),
             TextField(
               controller: _descriptionController,
-              focusNode: _focusNodes[4], // index 4 = description
+              focusNode: _focusNodes[3], // index 3 = description
               textInputAction: TextInputAction.next, // move to next field
-              onSubmitted: (_) => _focusNodes[5].requestFocus(),
+              onSubmitted: (_) => _focusNodes[4].requestFocus(),
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 labelText: 'Description',
@@ -532,11 +518,12 @@ class _AddProductFormState extends State<AddProductForm> {
               onChanged: (_) => setState(() => _errors[4] = null),
             ),
             // Materials field
+            SizedBox(height: 20),
             TextField(
               controller: _materialsController,
-              focusNode: _focusNodes[5], // index 5 = materials
+              focusNode: _focusNodes[4], // index 4 = materials
               textInputAction: TextInputAction.next, // move to next field
-              onSubmitted: (_) => _focusNodes[6].requestFocus(),
+              onSubmitted: (_) => _focusNodes[5].requestFocus(),
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 labelText: 'Materials',
@@ -553,11 +540,12 @@ class _AddProductFormState extends State<AddProductForm> {
               onChanged: (_) => setState(() => _errors[5] = null),
             ),
             // Condition field
+            SizedBox(height: 20),
             TextField(
               controller: _conditionController,
-              focusNode: _focusNodes[6], // index 6 = condition
+              focusNode: _focusNodes[5], // index 5 = condition
               textInputAction: TextInputAction.next, // move to next field
-              onSubmitted: (_) => _focusNodes[7].requestFocus(),
+              onSubmitted: (_) => _focusNodes[6].requestFocus(),
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 labelText: 'Condition',
@@ -574,9 +562,10 @@ class _AddProductFormState extends State<AddProductForm> {
               onChanged: (_) => setState(() => _errors[6] = null),
             ),
             // Quantity field
+            SizedBox(height: 20),
             TextField(
               controller: _quantityController,
-              focusNode: _focusNodes[7], // index 7 = quantity
+              focusNode: _focusNodes[6], // index 6 = quantity
               textInputAction: TextInputAction.done, // move to next field
               onSubmitted: (_) => _saveProduct(),
               style: const TextStyle(color: Colors.white),
@@ -594,7 +583,80 @@ class _AddProductFormState extends State<AddProductForm> {
               ),
               onChanged: (_) => setState(() => _errors[7] = null),
             ),
-            const SizedBox(height: 24),
+            // Size field
+            const SizedBox(height: 20),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Text(
+                      'Available Sizes',
+                      style: TextStyle(color: Colors.white70, fontSize: 16),
+                    ),
+                    const SizedBox(width: 8),
+                    if (_errors[3] != null) // Show error if validation failed
+                      Text(
+                        _errors[3]!,
+                        style: const TextStyle(
+                          color: Colors.redAccent,
+                          fontSize: 12,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: List.generate(9, (index) {
+                    final size = index + 4; // Sizes 4-12
+                    final isSelected = _selectedSizes.contains(size);
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          if (isSelected) {
+                            _selectedSizes.remove(size); // Deselect
+                          } else {
+                            _selectedSizes.add(size); // Select
+                          }
+                          _errors[3] = null; // Clear error when user interacts
+                        });
+                      },
+                      child: Container(
+                        width: 60,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? const Color(0xFFEDFF00)
+                              : Colors.grey[800],
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: isSelected
+                                ? const Color(0xFFEDFF00)
+                                : Colors.grey[700]!,
+                            width: isSelected ? 2 : 1,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            size.toString(),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: isSelected ? Colors.black : Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               height: 50,
