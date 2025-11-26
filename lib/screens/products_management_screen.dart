@@ -1,13 +1,15 @@
 import 'dart:convert';
-import 'dart:io';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'add_product_form.dart';
 
 // runtime API base URL (Android emulator uses 10.0.2.2)
-final String kApiBaseUrl =
-  Platform.isAndroid ? 'http://10.0.2.2:3000/api' : 'http://localhost:3000/api';
+String get kApiBaseUrl {
+  if (kIsWeb) return 'http://localhost:3000/api';
+  if (defaultTargetPlatform == TargetPlatform.android) return 'http://10.0.2.2:3000/api';
+  return 'http://localhost:3000/api';
+}
 
 class ProductsManagementScreen extends StatefulWidget {
   // product managemement screen

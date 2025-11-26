@@ -1,15 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart'; // for image picking
 import 'dart:io'; // needed to display picked images
-import 'package:flutter/foundation.dart'
-    show kIsWeb; // to check if running on web
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-// Use a runtime base URL so Android emulator uses 10.0.2.2 automatically.
+// Use a runtime base URL that works for web and mobile platforms
+// Web uses localhost, Android emulator uses 10.0.2.2
 // For physical devices, replace with your machine LAN IP (e.g. http://192.168.1.42:3000/api)
-final String kApiBaseUrl = Platform.isAndroid
-    ? 'http://10.0.2.2:3000/api'
-    : 'http://localhost:3000/api';
+String get kApiBaseUrl {
+  if (kIsWeb) {
+    // Web platform - use localhost
+    return 'http://localhost:3000/api';
+  } else if (defaultTargetPlatform == TargetPlatform.android) {
+    // Android emulator - use 10.0.2.2 to reach host machine
+    return 'http://10.0.2.2:3000/api';
+  } else {
+    // iOS simulator or other platforms - use localhost
+    return 'http://localhost:3000/api';
+  }
+}
 
 // a form widget for adding a new product
 class AddProductForm extends StatefulWidget {
