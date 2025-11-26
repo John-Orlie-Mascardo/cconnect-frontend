@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 // import 'home_screen.dart';
 import 'cart_screen.dart';
 import 'me_screen.dart';
+import '../services/cart_manager.dart';
 
 /// Product detail screen showing full product information
 /// Features: Image gallery, size selection, add to cart, wishlist, chat, tabs
@@ -77,16 +78,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
-    // TODO: Add actual cart functionality
+    // Add to Cart Manager
+    CartManager.instance.addItem({
+      'title': widget.productTitle,
+      'price': widget.productPrice,
+      'image': widget.productImage,
+      'size': _selectedSize,
+      'qty': 1,
+    });
+
+    // Show success message
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           'Added ${widget.productTitle} (Size $_selectedSize) to cart!',
-          style: TextStyle(color: Colors.black),
+          style: const TextStyle(color: Colors.black),
         ),
-
-        backgroundColor: Color(0xFFEDFF00),
-        duration: Duration(seconds: 2),
+        backgroundColor: const Color(0xFFEDFF00),
+        duration: const Duration(seconds: 2),
       ),
     );
   }

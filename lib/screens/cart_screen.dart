@@ -1,16 +1,42 @@
 import 'package:flutter/material.dart';
+import '../services/cart_manager.dart';
 
-class CartScreen extends StatelessWidget {
+class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
 
   @override
+  State<CartScreen> createState() => _CartScreenState();
+}
+
+class _CartScreenState extends State<CartScreen> {
+  // Access cart items from singleton
+  List<Map<String, dynamic>> get _cartItems => CartManager.instance.items;
+
+  double get _totalPrice {
+    if (_cartItems.isEmpty) return 0.0;
+    // Parse price string (e.g., "₱69,420") to double
+    double total = 0.0;
+    for (var item in _cartItems) {
+      String priceStr = item['price'].toString().replaceAll(
+        RegExp(r'[^0-9.]'),
+        '',
+      );
+      double price = double.tryParse(priceStr) ?? 0.0;
+      total += price;
+    }
+    return total;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final bool isEmpty = _cartItems.isEmpty;
+
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 0, 0, 0),
       body: SafeArea(
         child: Column(
           children: [
-            // Header Section: Displays the screen title 'CART' and a close button
+            // Header Section
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 24.0,
@@ -18,15 +44,13 @@ class CartScreen extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  // Title Container: Expands to fill space and centers the text
                   Expanded(
                     child: Center(
                       child: Padding(
-                        // Offset padding to visually center the title against the right-aligned close button
                         padding: const EdgeInsets.only(left: 40),
-                        child: Text(
+                        child: const Text(
                           'CART',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'kobe11',
                             fontSize: 24,
                             letterSpacing: 4,
@@ -37,7 +61,6 @@ class CartScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // Navigation: Close button to dismiss the screen
                   IconButton(
                     icon: const Icon(
                       Icons.close,
@@ -52,26 +75,91 @@ class CartScreen extends StatelessWidget {
               ),
             ),
 
-            // Spacer: Occupies remaining vertical space to push the footer to the bottom
-            const Expanded(child: SizedBox.expand()),
+            // Main Content: Empty State vs Cart List
+            Expanded(
+              child: isEmpty
+                  ? _buildEmptyState()
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      itemCount: _cartItems.length,
+                      itemBuilder: (context, index) {
+                        final item = _cartItems[index];
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[900],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[800],
+                                  borderRadius: BorderRadius.circular(4),
+                                  image: item['image'] != null
+                                      ? DecorationImage(
+                                          image: AssetImage(item['image']),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item['title'],
+                                      style: const TextStyle(
+                                        fontFamily: 'kobe11Bold',
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    Text(
+                                      item['price'],
+                                      style: const TextStyle(
+                                        fontFamily: 'kobe11',
+                                        color: Colors.white70,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    CartManager.instance.removeItem(index);
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
 
-            // Footer Section: Contains the total amount display and the main action button
+            // Footer Section
             Container(
-              color: const Color.fromARGB(
-                255,
-                0,
-                0,
-                0,
-              ), // Background color matches scaffold
+              color: const Color.fromARGB(255, 0, 0, 0),
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Summary Row: Displays 'TOTAL' label and the current cart value
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      Text(
+                    children: [
+                      const Text(
                         'TOTAL:',
                         style: TextStyle(
                           fontFamily: 'kobe11',
@@ -82,8 +170,10 @@ class CartScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '₱0.00',
-                        style: TextStyle(
+                        isEmpty
+                            ? '₱0.00'
+                            : '₱${_totalPrice.toStringAsFixed(2)}',
+                        style: const TextStyle(
                           fontFamily: 'kobe11',
                           fontSize: 24,
                           fontWeight: FontWeight.w400,
@@ -94,29 +184,31 @@ class CartScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 24),
-
-                  // Primary Action Button: Indicates cart state (Empty) or triggers checkout
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // No action required when cart is empty
-                      },
+                      onPressed: isEmpty
+                          ? null
+                          : () {
+                              // Checkout logic
+                            },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF666666),
+                        backgroundColor: isEmpty
+                            ? const Color(0xFF333333)
+                            : const Color(0xFFEDFF00),
                         padding: const EdgeInsets.symmetric(vertical: 18),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'CART IS EMPTY',
+                      child: Text(
+                        isEmpty ? 'CART IS EMPTY' : 'CHECKOUT',
                         style: TextStyle(
-                          fontFamily: 'kobe11',
+                          fontFamily: 'kobe11Bold',
                           fontSize: 18,
                           letterSpacing: 2,
-                          color: Colors.white,
+                          color: isEmpty ? Colors.white54 : Colors.black,
                         ),
                       ),
                     ),
@@ -126,6 +218,27 @@ class CartScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Icon(Icons.shopping_cart_outlined, size: 80, color: Colors.white24),
+          SizedBox(height: 16),
+          Text(
+            'Your Cart is Empty',
+            style: TextStyle(
+              fontFamily: 'kobe11',
+              fontSize: 18,
+              color: Colors.white54,
+              letterSpacing: 1.5,
+            ),
+          ),
+        ],
       ),
     );
   }
