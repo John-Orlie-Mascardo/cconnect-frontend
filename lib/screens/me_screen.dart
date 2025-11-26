@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'cart_screen.dart';
 import 'my_purchases_screen.dart';
-import 'notifications_screen.dart';
-import 'chats_screen.dart';
 
 class MeScreen extends StatelessWidget {
   const MeScreen({super.key});
@@ -19,48 +17,22 @@ class MeScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Row(
                 children: [
-                  // Notifications Button: Navigates to the NotificationScreen
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    icon: const Icon(
-                      Icons.notifications_none,
-                      size: 36,
-                      color: Colors.white,
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const NotificationScreen(),
-                        ),
-                      );
-                    },
-                  ),
-
-                  // Chat Button: Navigates to the ChatsScreen
-                  // Translated slightly left to adjust visual spacing between icons
-                  Transform.translate(
-                    offset: const Offset(-6, 0),
-                    child: IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      icon: const Icon(
-                        Icons.chat_bubble_outline,
-                        size: 32,
+                  InkWell(
+                    onTap: () =>
+                        Navigator.pushReplacementNamed(context, '/home'),
+                    borderRadius: BorderRadius.circular(40),
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(shape: BoxShape.circle),
+                      child: const Icon(
+                        Icons.arrow_back,
                         color: Colors.white,
+                        size: 24,
                       ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const ChatsScreen(),
-                          ),
-                        );
-                      },
                     ),
                   ),
-
+                  const SizedBox(width: 16),
                   const Spacer(),
 
                   // Brand Logo: Displayed on the far right of the top bar

@@ -45,14 +45,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       Navigator.of(context).popUntil((route) => route.isFirst);
     } else if (index == 1) {
       // Cart - Navigate to cart screen
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const CartScreen()),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const CartScreen()));
     } else if (index == 2) {
       // Me - Navigate to me/profile screen
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const MeScreen()),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const MeScreen()));
     }
   }
 
@@ -82,7 +82,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       SnackBar(
         content: Text(
           'Added ${widget.productTitle} (Size $_selectedSize) to cart!',
+          style: TextStyle(color: Colors.black),
         ),
+
         backgroundColor: Color(0xFFEDFF00),
         duration: Duration(seconds: 2),
       ),
@@ -204,7 +206,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 _isFavorite
                                     ? Icons.favorite
                                     : Icons.favorite_border,
-                                color: _isFavorite ? Color(0xFFEDFF00) : Colors.white,
+                                color: _isFavorite
+                                    ? Color(0xFFEDFF00)
+                                    : Colors.white,
                               ),
                               onPressed: _toggleFavorite,
                             ),
@@ -271,7 +275,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                       fontWeight: isSelected
                                           ? FontWeight.bold
                                           : FontWeight.normal,
-                                      color: isSelected ? Colors.black : Colors.white,
+                                      color: isSelected
+                                          ? Colors.black
+                                          : Colors.white,
                                     ),
                                   ),
                                 ),
@@ -292,8 +298,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Color(0xFFEDFF00),
                                   foregroundColor: Colors.black,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 14),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(4),
                                   ),
@@ -379,7 +386,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             child: BottomNavigationBar(
               backgroundColor: Colors.black,
               type: BottomNavigationBarType.fixed,
-              selectedItemColor: Color(0xFFEDFF00),
+              selectedItemColor: Color.fromARGB(255, 255, 255, 255),
               unselectedItemColor: Colors.white70,
               currentIndex: 0,
               onTap: _onNavTap,

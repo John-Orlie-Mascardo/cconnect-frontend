@@ -25,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
- void _showSuccessModal() {
+  void _showSuccessModal() {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -57,14 +57,20 @@ class _LoginScreenState extends State<LoginScreen> {
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.pop(ctx); // Close dialog
-                  
+
                   // Check if we can pop back (came from HomeScreen/DashboardScreen)
                   // If yes, return true to indicate successful login
                   // If no, navigate to home using named route
                   if (Navigator.canPop(context)) {
-                    Navigator.pop(context, true); // Return to previous screen with result = true
+                    Navigator.pop(
+                      context,
+                      true,
+                    ); // Return to previous screen with result = true
                   } else {
-                    Navigator.pushReplacementNamed(context, '/home'); // Navigate to home
+                    Navigator.pushReplacementNamed(
+                      context,
+                      '/home',
+                    ); // Navigate to home
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -291,13 +297,15 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       // Create Google Auth Provider
       final GoogleAuthProvider googleProvider = GoogleAuthProvider();
-      
+
       // Add scopes if needed
       googleProvider.addScope('email');
       googleProvider.addScope('profile');
 
       // Sign in with popup (works better on web than google_sign_in package)
-      UserCredential userCred = await FirebaseAuth.instance.signInWithPopup(googleProvider);
+      UserCredential userCred = await FirebaseAuth.instance.signInWithPopup(
+        googleProvider,
+      );
 
       // Get Firebase token
       final token = await userCred.user?.getIdToken();
@@ -359,6 +367,8 @@ class _LoginScreenState extends State<LoginScreen> {
           padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
+            autovalidateMode:
+                AutovalidateMode.onUserInteraction, // removes error messages
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
