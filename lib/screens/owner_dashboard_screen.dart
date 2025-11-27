@@ -191,16 +191,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _handleLogout();
               },
               child: const ListTile(
-                leading: Icon(
-                  Icons.logout,
-                  color: Colors.white,
-                ),
+                leading: Icon(Icons.logout, color: Colors.white),
                 title: Text(
                   "Logout",
-                  style: TextStyle(
-                    fontFamily: 'kobe11',
-                    color: Colors.white,
-                  ),
+                  style: TextStyle(fontFamily: 'kobe11', color: Colors.white),
                 ),
               ),
             ),
