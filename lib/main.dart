@@ -1,6 +1,5 @@
 import 'package:csoles_application/screens/home_screen.dart';
 import 'package:csoles_application/screens/owner_dashboard_screen.dart';
-import 'package:csoles_application/screens/products_management_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart'; // generated file

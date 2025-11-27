@@ -6,10 +6,12 @@ import 'me_screen.dart';
 import 'notifications_screen.dart';
 import 'chats_screen.dart';
 import 'product_detail_screen.dart';
+import 'owner_dashboard_screen.dart';
 import 'login_screen.dart';
 import 'settings_screen.dart';
 import '../models/product.dart';
 import '../services/product_service.dart';
+import '../services/auth_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -27,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Tracks user authentication status
   bool _isLoggedIn = false;
+  String? _userRole;
 
   // ─── PRODUCT DATA ─────────────────────────────────────────────
   List<Product> products = [];
@@ -44,9 +47,16 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _selectedIndex = index);
 
     if (index == 1) {
-      await Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const CartScreen()));
+      // navigate to Dashboard if admin, Cart otherwise
+      if (_userRole == 'admin') {
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const DashboardScreen()));
+      } else {
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const CartScreen()));
+      }
       if (mounted) setState(() => _selectedIndex = 0);
     } else if (index == 2) {
       await Navigator.of(
@@ -58,11 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _navigateToProductDetail(Product product) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ProductDetailScreen(
-          product: product,
-        ),
-      ),
+      MaterialPageRoute(builder: (_) => ProductDetailScreen(product: product)),
     );
   }
 
@@ -98,10 +104,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// REAL AUTH CHECK: Checks if a Firebase user is currently signed in
-  void _checkAuthStatus() {
+  Future<void> _checkAuthStatus() async {
     final user = FirebaseAuth.instance.currentUser;
+    final role = await AuthService.getRole(); // gets user role if any
     setState(() {
       _isLoggedIn = user != null;
+      _userRole = role; // sets user state to admin
     });
   }
 
@@ -432,50 +440,52 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             )
                           : products.isEmpty
-                              ? Center(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(32.0),
-                                    child: Text(
-                                      'No products available',
-                                      style: TextStyle(
-                                        fontFamily: 'kobe11',
-                                        color: Colors.grey[400],
-                                        fontSize: 16,
-                                      ),
-                                    ),
+                          ? Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(32.0),
+                                child: Text(
+                                  'No products available',
+                                  style: TextStyle(
+                                    fontFamily: 'kobe11',
+                                    color: Colors.grey[400],
+                                    fontSize: 16,
                                   ),
-                                )
-                              : GridView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: products.length,
-                                  gridDelegate:
-                                      const SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 2,
-                                        crossAxisSpacing: 12,
-                                        mainAxisSpacing: 20,
-                                        childAspectRatio: 0.72,
-                                      ),
-                                  itemBuilder: (context, index) {
-                                    final product = products[index];
-                                    // Construct image URL properly
-                                    String? imageUrl;
-                                    if (product.image != null) {
-                                      // Ensure there's a slash between base URL and path
-                                      final imagePath = product.image!.startsWith('/') 
-                                          ? product.image! 
-                                          : '/${product.image!}';
-                                      imageUrl = 'http://localhost:3000$imagePath';
-                                    }
-                                    
-                                    return ProductCard(
-                                      title: product.name,
-                                      price: '₱${product.price.toStringAsFixed(2)}',
-                                      imageUrl: imageUrl,
-                                      onTap: () => _navigateToProductDetail(product),
-                                    );
-                                  },
                                 ),
+                              ),
+                            )
+                          : GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: products.length,
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    crossAxisSpacing: 12,
+                                    mainAxisSpacing: 20,
+                                    childAspectRatio: 0.72,
+                                  ),
+                              itemBuilder: (context, index) {
+                                final product = products[index];
+                                // Construct image URL properly
+                                String? imageUrl;
+                                if (product.image != null) {
+                                  // Ensure there's a slash between base URL and path
+                                  final imagePath =
+                                      product.image!.startsWith('/')
+                                      ? product.image!
+                                      : '/${product.image!}';
+                                  imageUrl = 'http://localhost:3000$imagePath';
+                                }
+
+                                return ProductCard(
+                                  title: product.name,
+                                  price: '₱${product.price.toStringAsFixed(2)}',
+                                  imageUrl: imageUrl,
+                                  onTap: () =>
+                                      _navigateToProductDetail(product),
+                                );
+                              },
+                            ),
                     ),
                   ],
                 ),
@@ -493,16 +503,24 @@ class _HomeScreenState extends State<HomeScreen> {
         unselectedItemColor: Colors.grey,
         currentIndex: _selectedIndex,
         onTap: _onNavTap,
-        items: const [
-          BottomNavigationBarItem(
+        items: [
+          // ← Remove 'const' here
+          const BottomNavigationBarItem(
+            // ← Keep const on individual items that don't change
             icon: Icon(Icons.home_outlined),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart_outlined),
-            label: 'Cart',
+            // ← No const here - it's dynamic
+            icon: Icon(
+              _userRole == 'admin'
+                  ? Icons.dashboard_outlined
+                  : Icons.shopping_cart_outlined,
+            ),
+            label: _userRole == 'admin' ? 'Dashboard' : 'Cart',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
+            // ← Keep const on static items
             icon: Icon(Icons.person_outline),
             label: 'Me',
           ),
@@ -554,18 +572,24 @@ class ProductCard extends StatelessWidget {
                               width: double.infinity,
                               height: double.infinity,
                               fit: BoxFit.cover,
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return Center(
-                                  child: CircularProgressIndicator(
-                                    value: loadingProgress.expectedTotalBytes != null
-                                        ? loadingProgress.cumulativeBytesLoaded /
-                                            loadingProgress.expectedTotalBytes!
-                                        : null,
-                                    color: const Color(0xFFEDFF00),
-                                  ),
-                                );
-                              },
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Center(
+                                      child: CircularProgressIndicator(
+                                        value:
+                                            loadingProgress
+                                                    .expectedTotalBytes !=
+                                                null
+                                            ? loadingProgress
+                                                      .cumulativeBytesLoaded /
+                                                  loadingProgress
+                                                      .expectedTotalBytes!
+                                            : null,
+                                        color: const Color(0xFFEDFF00),
+                                      ),
+                                    );
+                                  },
                               errorBuilder: (context, error, stackTrace) {
                                 print('Image load error: $error');
                                 return Container(
