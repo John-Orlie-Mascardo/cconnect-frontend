@@ -267,9 +267,30 @@ class _LoginScreenState extends State<LoginScreen> {
       // Close loading modal
       if (mounted) Navigator.pop(context);
 
+      // Try traditional login (for users who reset password)
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        try {
+          final res = await AuthService.loginWithTraditional(email, password);
+          
+          if (res['statusCode'] == 200) {
+            final Map<String, dynamic> body = jsonDecode(res['body']);
+            final String role = body['role'] ?? body['user']?['role'] ?? 'user';
+            await AuthService.saveRole(role);
+
+            setState(() => _isLoading = false);
+            if (mounted) {
+              _showSuccessModal(role);
+            }
+            return; // Success, exit function
+          }
+        } catch (_) {
+          // Traditional login also failed, show original error
+        }
+      }
+
       setState(() {
         _isLoading = false;
-        if (e.code == 'wrong-password') {
+        if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
           _errorMessage = "The password you've entered is incorrect";
         } else if (e.code == 'user-not-found') {
           _errorMessage = 'No account found with this email';
@@ -537,7 +558,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: _showForgotPasswordModal,
+                    onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
                     child: const Text(
                       'Forgot Password?',
                       style: TextStyle(

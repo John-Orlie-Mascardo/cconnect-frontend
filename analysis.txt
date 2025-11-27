@@ -1,0 +1,45 @@
+﻿Analyzing cconnect-frontend...                                  
+
+warning - Unused import: 'dart:convert' - lib\screens\forgot_password_screen.dart:1:8 - unused_import
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\forgot_password_screen.dart:102:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\forgot_password_screen.dart:102:80 - deprecated_member_use
+   info - Don't invoke 'print' in production code - lib\screens\home_screen.dart:99:7 - avoid_print
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\home_screen.dart:162:30 - use_build_context_synchronously
+   info - Unnecessary use of multiple underscores - lib\screens\home_screen.dart:394:47 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\screens\home_screen.dart:394:51 - unnecessary_underscores
+   info - Don't invoke 'print' in production code - lib\screens\home_screen.dart:594:33 - avoid_print
+   info - Don't invoke 'print' in production code - lib\screens\login_screen.dart:247:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\screens\login_screen.dart:252:9 - avoid_print
+   info - Unnecessary use of multiple underscores - lib\screens\me_screen.dart:118:49 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\screens\me_screen.dart:118:53 - unnecessary_underscores
+   info - Angle brackets will be interpreted as HTML - lib\screens\my_addresses_screen.dart:20:44 - unintended_html_in_doc_comment
+   info - Don't invoke 'print' in production code - lib\screens\my_profile_screen.dart:44:7 - avoid_print
+warning - The value of the field '_isLoggedIn' isn't used - lib\screens\owner_dashboard_screen.dart:20:8 - unused_field
+warning - The declaration '_handleLogin' isn't referenced - lib\screens\owner_dashboard_screen.dart:43:8 - unused_element
+   info - Unnecessary use of multiple underscores - lib\screens\product_detail_screen.dart:253:35 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\screens\product_detail_screen.dart:253:39 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\screens\product_detail_screen.dart:312:47 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\screens\product_detail_screen.dart:312:51 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\screens\product_detail_screen.dart:321:47 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\screens\product_detail_screen.dart:321:51 - unnecessary_underscores
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\product_detail_screen.dart:542:39 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block - lib\screens\products_management_screen.dart:11:5 - curly_braces_in_flow_control_structures
+   info - Don't use 'BuildContext's across async gaps - lib\screens\products_management_screen.dart:104:11 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\products_management_screen.dart:108:30 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\products_management_screen.dart:114:9 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\products_management_screen.dart:250:11 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\products_management_screen.dart:254:30 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\products_management_screen.dart:260:9 - use_build_context_synchronously
+   info - Unnecessary use of multiple underscores - lib\screens\register_screen.dart:474:41 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\screens\register_screen.dart:474:45 - unnecessary_underscores
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\reset_password_screen.dart:192:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\reset_password_screen.dart:192:80 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block - lib\screens\widgets\product_card.dart:21:7 - curly_braces_in_flow_control_structures
+   info - Don't invoke 'print' in production code - lib\services\address_service.dart:34:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\address_service.dart:60:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\address_service.dart:82:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\address_service.dart:103:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\product_service.dart:32:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\product_service.dart:53:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\product_service.dart:69:7 - avoid_print
+
