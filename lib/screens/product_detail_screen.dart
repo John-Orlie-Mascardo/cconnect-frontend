@@ -102,7 +102,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   /// Handle add to cart
-  void _addToCart() {
+  Future<void> _addToCart() async {
     // Check if user is logged in
     if (FirebaseAuth.instance.currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -141,12 +141,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     List<int> failedSizes = [];
 
     for (final size in _selectedSizes) {
-      final success = CartManager.instance.addItem({
+      final success = await CartManager.instance.addItem({
         'title': widget.product.name,
         'price': widget.product.price,
         'image': widget.product.image,
         'size': size,
         'qty': 1,
+        'productId': widget.product.id, // Add product ID for backend
       });
 
       if (success) {

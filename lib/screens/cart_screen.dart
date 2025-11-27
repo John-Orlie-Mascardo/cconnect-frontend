@@ -11,8 +11,24 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
+  bool _isLoading = true;
+
   // Access cart items from singleton
   List<Map<String, dynamic>> get _cartItems => CartManager.instance.items;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCart();
+  }
+
+  Future<void> _loadCart() async {
+    setState(() => _isLoading = true);
+    await CartManager.instance.loadCart();
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
 
   double get _totalPrice {
     if (_cartItems.isEmpty) return 0.0;
@@ -137,11 +153,17 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                 ),
 
-                // Main Content: Empty State vs Cart List
+                // Main Content: Loading, Empty State, or Cart List
                 Expanded(
-                  child: isEmpty
-                      ? _buildEmptyState()
-                      : ListView.builder(
+                  child: _isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFEDFF00)),
+                          ),
+                        )
+                      : isEmpty
+                          ? _buildEmptyState()
+                          : ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           itemCount: _cartItems.length,
                           itemBuilder: (context, index) {
@@ -198,10 +220,9 @@ class _CartScreenState extends State<CartScreen> {
                                       Icons.delete_outline,
                                       color: Colors.red,
                                     ),
-                                    onPressed: () {
-                                      setState(() {
-                                        CartManager.instance.removeItem(index);
-                                      });
+                                    onPressed: () async {
+                                      await CartManager.instance.removeItem(index);
+                                      setState(() {});
                                     },
                                     ),
                                 ],
