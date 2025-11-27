@@ -9,15 +9,16 @@ class ProductCard extends StatelessWidget {
   final VoidCallback onDelete;
 
   const ProductCard({
-    Key? key,
+    super.key,
     required this.product,
     required this.onUpdate,
     required this.onDelete,
-  }) : super(key: key);
+  });
 
   String get _baseUrl {
     if (kIsWeb) return 'http://localhost:3000';
-    if (defaultTargetPlatform == TargetPlatform.android) return 'http://10.0.2.2:3000';
+    if (defaultTargetPlatform == TargetPlatform.android)
+      return 'http://10.0.2.2:3000';
     return 'http://localhost:3000';
   }
 
@@ -37,7 +38,9 @@ class ProductCard extends StatelessWidget {
           // Product Image (if available)
           if (product.image != null)
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
               child: Image(
                 image: NetworkImage('$_baseUrl${product.image}'),
                 height: 200,
@@ -47,7 +50,11 @@ class ProductCard extends StatelessWidget {
                   return Container(
                     height: 200,
                     color: Colors.grey[900],
-                    child: const Icon(Icons.image_not_supported, size: 50, color: Colors.white24),
+                    child: const Icon(
+                      Icons.image_not_supported,
+                      size: 50,
+                      color: Colors.white24,
+                    ),
                   );
                 },
               ),
@@ -85,13 +92,11 @@ class ProductCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 // Description
-                if (product.description != null && product.description!.isNotEmpty)
+                if (product.description != null &&
+                    product.description!.isNotEmpty)
                   Text(
                     product.description!,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.white70,
-                    ),
+                    style: const TextStyle(fontSize: 14, color: Colors.white70),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -104,10 +109,22 @@ class ProductCard extends StatelessWidget {
                     if (product.size != null)
                       _buildDetailChip(Icons.straighten, 'Size', product.size!),
                     if (product.materials != null)
-                      _buildDetailChip(Icons.category, 'Material', product.materials!),
+                      _buildDetailChip(
+                        Icons.category,
+                        'Material',
+                        product.materials!,
+                      ),
                     if (product.condition != null)
-                      _buildDetailChip(Icons.star, 'Condition', product.condition!),
-                    _buildDetailChip(Icons.inventory, 'Qty', '${product.quantity}'),
+                      _buildDetailChip(
+                        Icons.star,
+                        'Condition',
+                        product.condition!,
+                      ),
+                    _buildDetailChip(
+                      Icons.inventory,
+                      'Qty',
+                      '${product.quantity}',
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -180,10 +197,8 @@ class ProductCard extends StatelessWidget {
   void _showEditDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => EditProductDialog(
-        product: product,
-        onSave: onUpdate,
-      ),
+      builder: (context) =>
+          EditProductDialog(product: product, onSave: onUpdate),
     );
   }
 
@@ -192,7 +207,10 @@ class ProductCard extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E1E),
-        title: const Text('Delete Product', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Delete Product',
+          style: TextStyle(color: Colors.white),
+        ),
         content: Text(
           'Are you sure you want to delete "${product.name}"?',
           style: const TextStyle(color: Colors.white70),
@@ -200,7 +218,10 @@ class ProductCard extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white54),
+            ),
           ),
           ElevatedButton(
             onPressed: () {

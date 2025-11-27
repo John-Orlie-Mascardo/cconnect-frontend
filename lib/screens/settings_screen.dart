@@ -1,3 +1,4 @@
+import 'package:csoles_application/screens/my_addresses_screen.dart';
 import 'package:flutter/material.dart';
 import 'my_profile_screen.dart';
 
@@ -17,6 +18,7 @@ class SettingsScreen extends StatelessWidget {
         ),
       ),
       body: ListView(
+        // Profile
         children: [
           _buildSectionHeader('My Account'),
           _buildSettingsItem(
@@ -31,9 +33,16 @@ class SettingsScreen extends StatelessWidget {
             },
           ),
           _buildSettingsItem(
+            // addresses
             context,
             'My Addresses',
             Icons.location_on_outlined,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MyAddressesScreen()),
+              );
+            },
           ),
         ],
       ),

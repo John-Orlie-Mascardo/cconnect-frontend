@@ -7,10 +7,10 @@ class EditProductDialog extends StatefulWidget {
   final VoidCallback onSave;
 
   const EditProductDialog({
-    Key? key,
+    super.key,
     required this.product,
     required this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   State<EditProductDialog> createState() => _EditProductDialogState();
@@ -29,11 +29,21 @@ class _EditProductDialogState extends State<EditProductDialog> {
   @override
   void initState() {
     super.initState();
-    _priceController = TextEditingController(text: widget.product.price.toString());
-    _descriptionController = TextEditingController(text: widget.product.description ?? '');
-    _materialsController = TextEditingController(text: widget.product.materials ?? '');
-    _conditionController = TextEditingController(text: widget.product.condition ?? '');
-    _quantityController = TextEditingController(text: widget.product.quantity.toString());
+    _priceController = TextEditingController(
+      text: widget.product.price.toString(),
+    );
+    _descriptionController = TextEditingController(
+      text: widget.product.description ?? '',
+    );
+    _materialsController = TextEditingController(
+      text: widget.product.materials ?? '',
+    );
+    _conditionController = TextEditingController(
+      text: widget.product.condition ?? '',
+    );
+    _quantityController = TextEditingController(
+      text: widget.product.quantity.toString(),
+    );
     _sizeController = TextEditingController(text: widget.product.size ?? '');
   }
 
@@ -82,10 +92,7 @@ class _EditProductDialogState extends State<EditProductDialog> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -193,9 +200,15 @@ class _EditProductDialogState extends State<EditProductDialog> {
               ? const SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.black,
+                  ),
                 )
-              : const Text('Save', style: TextStyle(fontWeight: FontWeight.bold)),
+              : const Text(
+                  'Save',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
         ),
       ],
     );

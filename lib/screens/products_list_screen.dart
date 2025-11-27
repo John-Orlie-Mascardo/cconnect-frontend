@@ -5,7 +5,7 @@ import 'widgets/product_card.dart';
 import 'add_product_form.dart';
 
 class ProductsListScreen extends StatefulWidget {
-  const ProductsListScreen({Key? key}) : super(key: key);
+  const ProductsListScreen({super.key});
 
   @override
   State<ProductsListScreen> createState() => _ProductsListScreenState();
@@ -81,10 +81,7 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadProducts,
-          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadProducts),
         ],
       ),
       body: _buildBody(),
