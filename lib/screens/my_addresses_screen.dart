@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/address.dart';
+import '../../services/address_service.dart';
 import 'address_form_sheet.dart';
 
 /// Screen for managing user delivery addresses
@@ -50,55 +51,68 @@ class _MyAddressesScreenState extends State<MyAddressesScreen> {
     _loadAddresses();
   }
 
-  // TODO: Backend - Replace with GET /api/users/:userId/addresses
   Future<void> _loadAddresses() async {
     setState(() => _isLoading = true);
-
-    // Simulate API delay
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    // Mock data (empty for now - backend will provide real data)
-    setState(() {
-      _addresses = [];
-      _isLoading = false;
-    });
+    try {
+      final addresses = await AddressService.getAddresses();
+      setState(() {
+        _addresses = addresses;
+      });
+    } catch (e) {
+      _showSnackBar('Failed to load addresses', isError: true);
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
-  // TODO: Backend - Replace with POST /api/users/:userId/addresses
   Future<void> _addAddress(Address address) async {
-    // Check 3-address limit
     if (_addresses.length >= 3) {
       _showSnackBar('Maximum 3 addresses allowed', isError: true);
       return;
     }
 
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    setState(() {
-      // Generate temporary mock ID (backend will provide real ID)
-      final newAddress = address.copyWith(id: DateTime.now().toString());
-      _addresses.add(newAddress);
-      _isLoading = false;
-    });
-
-    _showSnackBar('Address added successfully');
+    try {
+      final newAddress = await AddressService.addAddress(address);
+      if (newAddress != null) {
+        setState(() {
+          _addresses.add(newAddress);
+        });
+        _showSnackBar('Address added successfully');
+      } else {
+        throw Exception('Failed to add address');
+      }
+    } catch (e) {
+      _showSnackBar('Failed to add address', isError: true);
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
-  // TODO: Backend - Replace with PUT /api/addresses/:addressId
   Future<void> _updateAddress(int index, Address updatedAddress) async {
+    if (updatedAddress.id == null) {
+      _showSnackBar('Error: Address ID is missing', isError: true);
+      return;
+    }
+
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    setState(() {
-      _addresses[index] = updatedAddress;
-      _isLoading = false;
-    });
-
-    _showSnackBar('Address updated successfully');
+    try {
+      final success = await AddressService.updateAddress(updatedAddress.id!, updatedAddress);
+      if (success) {
+        setState(() {
+          _addresses[index] = updatedAddress;
+        });
+        _showSnackBar('Address updated successfully');
+      } else {
+        throw Exception('Failed to update address');
+      }
+    } catch (e) {
+      _showSnackBar('Failed to update address', isError: true);
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
-  // TODO: Backend - Replace with DELETE /api/addresses/:addressId
   Future<void> _deleteAddress(int index) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -131,15 +145,28 @@ class _MyAddressesScreenState extends State<MyAddressesScreen> {
 
     if (confirmed != true) return;
 
+    final addressId = _addresses[index].id;
+    if (addressId == null) {
+      _showSnackBar('Error: Address ID is missing', isError: true);
+      return;
+    }
+
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    setState(() {
-      _addresses.removeAt(index);
-      _isLoading = false;
-    });
-
-    _showSnackBar('Address deleted successfully');
+    try {
+      final success = await AddressService.deleteAddress(addressId);
+      if (success) {
+        setState(() {
+          _addresses.removeAt(index);
+        });
+        _showSnackBar('Address deleted successfully');
+      } else {
+        throw Exception('Failed to delete address');
+      }
+    } catch (e) {
+      _showSnackBar('Failed to delete address', isError: true);
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
@@ -153,6 +180,12 @@ class _MyAddressesScreenState extends State<MyAddressesScreen> {
   }
 
   void _showAddressForm({Address? existingAddress, int? index}) {
+    // Check limit if adding new address
+    if (existingAddress == null && _addresses.length >= 3) {
+      _showSnackBar('Maximum 3 addresses allowed', isError: true);
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF1B1B1B),

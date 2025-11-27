@@ -25,14 +25,44 @@ class ProductDetailScreen extends StatefulWidget {
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   // ─── STATE VARIABLES ───────────────────────────────────────
 
-  /// Currently selected size (null = no size selected)
-  int? _selectedSize;
+  /// Currently selected sizes
+  final Set<int> _selectedSizes = {};
 
   /// Available shoe sizes
   final List<int> _sizes = [4, 5, 6, 7, 8, 9, 10, 11, 12];
 
-  /// Unavailable shoe sizes (simulated)
-  final List<int> _unavailableSizes = [];
+  /// Unavailable shoe sizes
+  List<int> _unavailableSizes = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateAvailableSizes();
+  }
+
+  void _calculateAvailableSizes() {
+    final productSize = widget.product.size;
+    
+    // If no size info is present, mark all as unavailable (or handle as needed)
+    if (productSize == null || productSize.isEmpty) {
+      _unavailableSizes = List.from(_sizes);
+      return;
+    }
+
+    final availableSizes = <int>{};
+    // Handle comma-separated sizes (e.g. "6, 7") or single size "6"
+    final parts = productSize.split(',');
+    for (var part in parts) {
+      final size = int.tryParse(part.trim());
+      if (size != null) {
+        availableSizes.add(size);
+      }
+    }
+
+    setState(() {
+      _unavailableSizes = _sizes.where((s) => !availableSizes.contains(s)).toList();
+    });
+  }
 
   /// Currently selected tab (0=Description, 1=Materials, 2=Condition)
   int _selectedTab = 0;
@@ -63,7 +93,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   /// Handle size selection
   void _selectSize(int size) {
     setState(() {
-      _selectedSize = size;
+      if (_selectedSizes.contains(size)) {
+        _selectedSizes.remove(size);
+      } else {
+        _selectedSizes.add(size);
+      }
     });
   }
 
@@ -86,11 +120,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
-    if (_selectedSize == null) {
+    if (_selectedSizes.isEmpty) {
       // Show snackbar if no size selected
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select a size first'),
+          content: Text('Please select at least one size'),
           backgroundColor: Colors.redAccent,
           duration: Duration(seconds: 2),
         ),
@@ -98,16 +132,31 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
-    // Add to Cart Manager
-    final success = CartManager.instance.addItem({
-      'title': widget.product.name,
-      'price': widget.product.price,
-      'image': widget.product.image,
-      'size': _selectedSize,
-      'qty': 1,
-    });
+    // Check if adding all items would exceed cart limit
+    // Note: CartManager check is per item, so we do a pre-check here if possible, 
+    // or just try to add them one by one.
+    // Since CartManager.addItem returns false if full, we can track successes.
 
-    if (!success) {
+    int addedCount = 0;
+    List<int> failedSizes = [];
+
+    for (final size in _selectedSizes) {
+      final success = CartManager.instance.addItem({
+        'title': widget.product.name,
+        'price': widget.product.price,
+        'image': widget.product.image,
+        'size': size,
+        'qty': 1,
+      });
+
+      if (success) {
+        addedCount++;
+      } else {
+        failedSizes.add(size);
+      }
+    }
+
+    if (addedCount == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Cart is full'),
@@ -119,20 +168,49 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
 
     // Show success message
+    final sizeString = _selectedSizes.join(', ');
+    String message = 'Added ${widget.product.name} (Sizes: $sizeString) to cart!';
+    
+    if (failedSizes.isNotEmpty) {
+      message += ' (Failed to add sizes: ${failedSizes.join(', ')} due to cart limit)';
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Added ${widget.product.name} (Size $_selectedSize) to cart!',
+          message,
           style: const TextStyle(color: Colors.black),
         ),
         backgroundColor: const Color(0xFFEDFF00),
         duration: const Duration(seconds: 2),
       ),
     );
+    
+    // Clear selection after successful add (optional, but good UX)
+    setState(() {
+      _selectedSizes.clear();
+    });
   }
 
   /// Toggle wishlist/favorite
   void _toggleFavorite() {
+    // Check if user is logged in
+    if (FirebaseAuth.instance.currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please login to add to wishlist'),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      // Navigate to login screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+      return;
+    }
+
     setState(() {
       _isFavorite = !_isFavorite;
     });
@@ -321,7 +399,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           spacing: 8,
                           runSpacing: 8,
                           children: _sizes.map((size) {
-                            final isSelected = _selectedSize == size;
+                            final isSelected = _selectedSizes.contains(size);
                             final isAvailable = !_unavailableSizes.contains(size);
 
                             return GestureDetector(
