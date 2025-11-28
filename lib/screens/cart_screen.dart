@@ -45,6 +45,20 @@ class _CartScreenState extends State<CartScreen> {
     return total;
   }
 
+  /// Build proper image URL for network images from backend
+  String _buildImageUrl(String imagePath) {
+    // If already a full URL, return as is
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    
+    // Construct full URL from relative path
+    // Backend serves images at http://localhost:3000/uploads/filename.jpg
+    final baseUrl = 'http://localhost:3000';
+    final path = imagePath.startsWith('/') ? imagePath : '/$imagePath';
+    return '$baseUrl$path';
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isEmpty = _cartItems.isEmpty;
@@ -185,11 +199,19 @@ class _CartScreenState extends State<CartScreen> {
                                       borderRadius: BorderRadius.circular(4),
                                       image: item['image'] != null
                                           ? DecorationImage(
-                                              image: AssetImage(item['image']),
+                                              image: NetworkImage(
+                                                _buildImageUrl(item['image']),
+                                              ),
                                               fit: BoxFit.cover,
                                             )
                                           : null,
                                     ),
+                                    child: item['image'] == null
+                                        ? const Icon(
+                                            Icons.image_not_supported,
+                                            color: Colors.white24,
+                                          )
+                                        : null,
                                   ),
                                   const SizedBox(width: 16),
                                   Expanded(

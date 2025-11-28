@@ -41,25 +41,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _calculateAvailableSizes() {
-    final productSize = widget.product.size;
+    // Read sizes array from product (new backend format)
+    final productSizes = widget.product.sizes;
     
-    // If no size info is present, mark all as unavailable (or handle as needed)
-    if (productSize == null || productSize.isEmpty) {
+    // If no sizes array is present, mark all as unavailable
+    if (productSizes == null || productSizes.isEmpty) {
       _unavailableSizes = List.from(_sizes);
       return;
     }
 
-    final availableSizes = <int>{};
-    // Handle comma-separated sizes (e.g. "6, 7") or single size "6"
-    final parts = productSize.split(',');
-    for (var part in parts) {
-      final size = int.tryParse(part.trim());
-      if (size != null) {
-        availableSizes.add(size);
-      }
-    }
+    // Convert to set for efficient lookup
+    final availableSizes = productSizes.toSet();
 
     setState(() {
+      // Mark sizes as unavailable if they're not in the product's sizes array
       _unavailableSizes = _sizes.where((s) => !availableSizes.contains(s)).toList();
     });
   }
@@ -139,11 +134,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     int addedCount = 0;
     List<int> failedSizes = [];
+    
+    // Create a copy of selected sizes to avoid concurrent modification
+    final sizesToAdd = List<int>.from(_selectedSizes);
 
-    for (final size in _selectedSizes) {
+    for (final size in sizesToAdd) {
       final success = await CartManager.instance.addItem({
         'title': widget.product.name,
-        'price': widget.product.price,
+        'price': '₱${widget.product.price.toStringAsFixed(2)}', // Format price as string
         'image': widget.product.image,
         'size': size,
         'qty': 1,
@@ -169,7 +167,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
 
     // Show success message
-    final sizeString = _selectedSizes.join(', ');
+    final sizeString = sizesToAdd.join(', ');
     String message = 'Added ${widget.product.name} (Sizes: $sizeString) to cart!';
     
     if (failedSizes.isNotEmpty) {

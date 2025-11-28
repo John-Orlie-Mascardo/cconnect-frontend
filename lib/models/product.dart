@@ -4,7 +4,8 @@ class Product {
   final double price;
   final String? description;
   final String? productId;
-  final String? size;
+  final String? size; // Deprecated: kept for backward compatibility
+  final List<int>? sizes; // New: array of available sizes
   final String? materials;
   final String? condition;
   final int quantity;
@@ -19,6 +20,7 @@ class Product {
     this.description,
     this.productId,
     this.size,
+    this.sizes,
     this.materials,
     this.condition,
     this.quantity = 0,
@@ -28,13 +30,22 @@ class Product {
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
+    // Parse sizes array from API
+    List<int>? sizesList;
+    if (json['sizes'] != null) {
+      if (json['sizes'] is List) {
+        sizesList = (json['sizes'] as List).map((e) => e is int ? e : int.tryParse(e.toString()) ?? 0).toList();
+      }
+    }
+
     return Product(
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
       price: (json['price'] ?? 0).toDouble(),
       description: json['description'],
       productId: json['productId'],
-      size: json['size'],
+      size: json['size'], // Keep for backward compatibility
+      sizes: sizesList,
       materials: json['materials'],
       condition: json['condition'],
       quantity: json['quantity'] ?? 0,
@@ -50,7 +61,7 @@ class Product {
       'price': price,
       'description': description,
       'productId': productId,
-      'size': size,
+      'sizes': sizes, // Send sizes array to backend
       'materials': materials,
       'condition': condition,
       'quantity': quantity,
@@ -65,6 +76,7 @@ class Product {
     String? description,
     String? productId,
     String? size,
+    List<int>? sizes,
     String? materials,
     String? condition,
     int? quantity,
@@ -79,6 +91,7 @@ class Product {
       description: description ?? this.description,
       productId: productId ?? this.productId,
       size: size ?? this.size,
+      sizes: sizes ?? this.sizes,
       materials: materials ?? this.materials,
       condition: condition ?? this.condition,
       quantity: quantity ?? this.quantity,

@@ -4,13 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'add_product_form.dart';
 
+import '../services/product_service.dart';
+
 // runtime API base URL (Android emulator uses 10.0.2.2)
-String get kApiBaseUrl {
-  if (kIsWeb) return 'http://localhost:3000/api';
-  if (defaultTargetPlatform == TargetPlatform.android)
-    return 'http://10.0.2.2:3000/api';
-  return 'http://localhost:3000/api';
-}
+// String get kApiBaseUrl {
+//   if (kIsWeb) return 'http://localhost:3000/api';
+//   if (defaultTargetPlatform == TargetPlatform.android)
+//     return 'http://10.0.2.2:3000/api';
+//   return 'http://localhost:3000/api';
+// }
 
 class ProductsManagementScreen extends StatefulWidget {
   // product managemement screen
@@ -36,7 +38,7 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
       _isLoading = true;
     });
     try {
-      final uri = Uri.parse('$kApiBaseUrl/products');
+      final uri = Uri.parse('${ProductService.kApiBaseUrl}/products');
       final res = await http.get(uri);
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
@@ -61,205 +63,235 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
   }
 
   Future<void> _deleteProduct(String id) async {
-    final confirmed =
-        await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: const Color(0xFF1E1E1E),
-            title: const Text(
-              'Remove product?',
-              style: TextStyle(color: Colors.white),
-            ),
-            content: const Text(
-              'This will mark the product as removed (soft delete).',
-              style: TextStyle(color: Colors.white),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text(
-                  'Cancel',
-                  style: TextStyle(color: Colors.white70),
-                ),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text(
-                  'Remove',
-                  style: TextStyle(color: Colors.redAccent),
-                ),
-              ),
-            ],
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text('Remove product?', style: TextStyle(color: Colors.white)),
+        content: const Text('This will mark the product as removed.', style: TextStyle(color: Colors.white)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
           ),
-        ) ??
-        false;
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Remove', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    ) ?? false;
 
     if (!confirmed) return;
 
     try {
-      final uri = Uri.parse('$kApiBaseUrl/products/$id');
+      final uri = Uri.parse('${ProductService.kApiBaseUrl}/products/$id');
       final res = await http.delete(uri);
       if (res.statusCode == 200 || res.statusCode == 204) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Product removed')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Product removed')));
         await _fetchProducts();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Remove failed: ${res.statusCode}')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Remove failed: ${res.statusCode}')));
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
   Future<void> _showEditDialog(Map<String, dynamic> product) async {
-    final qtyCtrl = TextEditingController(
-      text: product['quantity']?.toString() ?? '0',
-    );
-    final condCtrl = TextEditingController(
-      text: product['condition']?.toString() ?? '',
-    );
-    final priceCtrl = TextEditingController(
-      text: product['price']?.toString() ?? '0',
-    );
-    final matCtrl = TextEditingController(
-      text: product['materials']?.toString() ?? '',
-    );
-    final descCtrl = TextEditingController(
-      text: product['description']?.toString() ?? '',
-    );
+    final nameController = TextEditingController(text: product['name']);
+    final priceController = TextEditingController(text: product['price'].toString());
+    final descriptionController = TextEditingController(text: product['description']);
+    final materialsController = TextEditingController(text: product['materials']);
+    final conditionController = TextEditingController(text: product['condition']);
+    final quantityController = TextEditingController(text: product['quantity'].toString());
+    final stockController = TextEditingController(text: product['stock'].toString());
 
-    final res = await showDialog<bool>(
+    // Parse existing sizes
+    Set<int> selectedSizes = {};
+    if (product['sizes'] != null && product['sizes'] is List) {
+      selectedSizes = (product['sizes'] as List).map((e) => int.parse(e.toString())).toSet();
+    } else if (product['size'] != null) {
+      // Fallback for old string format
+      final parts = product['size'].toString().split(',');
+      for (var part in parts) {
+        final s = int.tryParse(part.trim());
+        if (s != null) selectedSizes.add(s);
+      }
+    }
+
+    final availableSizes = [4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+    await showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
-        title: const Text(
-          'Update product',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: priceCtrl,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: 'Price',
-                  labelStyle: TextStyle(color: Colors.white70),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white24),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            backgroundColor: Colors.grey[900],
+            title: const Text('Edit Product', style: TextStyle(color: Colors.white)),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: 'Name',
+                      labelStyle: TextStyle(color: Colors.white70),
+                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                    ),
                   ),
-                ),
+                  TextField(
+                    controller: priceController,
+                    style: const TextStyle(color: Colors.white),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Price',
+                      labelStyle: TextStyle(color: Colors.white70),
+                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                    ),
+                  ),
+                  TextField(
+                    controller: descriptionController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: 'Description',
+                      labelStyle: TextStyle(color: Colors.white70),
+                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                    ),
+                  ),
+                  TextField(
+                    controller: materialsController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: 'Materials',
+                      labelStyle: TextStyle(color: Colors.white70),
+                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                    ),
+                  ),
+                  TextField(
+                    controller: conditionController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: 'Condition',
+                      labelStyle: TextStyle(color: Colors.white70),
+                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                    ),
+                  ),
+                  TextField(
+                    controller: quantityController,
+                    style: const TextStyle(color: Colors.white),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Quantity',
+                      labelStyle: TextStyle(color: Colors.white70),
+                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                    ),
+                  ),
+                  TextField(
+                    controller: stockController,
+                    style: const TextStyle(color: Colors.white),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Stock',
+                      labelStyle: TextStyle(color: Colors.white70),
+                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Sizes', style: TextStyle(color: Colors.white70, fontSize: 16)),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: availableSizes.map((size) {
+                      final isSelected = selectedSizes.contains(size);
+                      return FilterChip(
+                        label: Text(size.toString()),
+                        selected: isSelected,
+                        onSelected: (bool selected) {
+                          setState(() {
+                            if (selected) {
+                              selectedSizes.add(size);
+                            } else {
+                              selectedSizes.remove(size);
+                            }
+                          });
+                        },
+                        backgroundColor: Colors.grey[800],
+                        selectedColor: const Color(0xFFEDFF00),
+                        checkmarkColor: Colors.black,
+                        labelStyle: TextStyle(
+                          color: isSelected ? Colors.black : Colors.white,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          side: BorderSide(
+                            color: isSelected ? const Color(0xFFEDFF00) : Colors.grey[700]!,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
               ),
-              TextField(
-                controller: qtyCtrl,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: 'Quantity',
-                  labelStyle: TextStyle(color: Colors.white70),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white24),
-                  ),
-                ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
               ),
-              TextField(
-                controller: condCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: 'Condition',
-                  labelStyle: TextStyle(color: Colors.white70),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white24),
-                  ),
+              ElevatedButton(
+                onPressed: () async {
+                  try {
+                    final uri = Uri.parse('${ProductService.kApiBaseUrl}/products/${product['_id']}');
+                    final response = await http.put(
+                      uri,
+                      headers: {'Content-Type': 'application/json'},
+                      body: jsonEncode({
+                        'name': nameController.text,
+                        'price': double.tryParse(priceController.text) ?? 0.0,
+                        'description': descriptionController.text,
+                        'materials': materialsController.text,
+                        'condition': conditionController.text,
+                        'quantity': int.tryParse(quantityController.text) ?? 0,
+                        'stock': int.tryParse(stockController.text) ?? 0,
+                        'sizes': selectedSizes.join(','), // Send as comma-separated string
+                      }),
+                    );
+
+                    if (response.statusCode == 200) {
+                      Navigator.pop(ctx);
+                      _fetchProducts(); // Refresh list
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Product updated successfully')),
+                      );
+                    } else {
+                      throw Exception('Failed to update: ${response.body}');
+                    }
+                  } catch (e) {
+                    print('Error updating product: $e');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e')),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFEDFF00),
+                  foregroundColor: Colors.black,
                 ),
-              ),
-              TextField(
-                controller: matCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: 'Materials',
-                  labelStyle: TextStyle(color: Colors.white70),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white24),
-                  ),
-                ),
-              ),
-              TextField(
-                controller: descCtrl,
-                style: const TextStyle(color: Colors.white),
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  labelStyle: TextStyle(color: Colors.white70),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white24),
-                  ),
-                ),
+                child: const Text('Save'),
               ),
             ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: Colors.white70),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              'Save',
-              style: TextStyle(color: Color(0xFFEDFF00)),
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
-
-    if (res != true) return;
-
-    // send PUT
-    final id = product['_id'] ?? product['id'] ?? product['productId'];
-    if (id == null) return;
-
-    try {
-      final uri = Uri.parse('$kApiBaseUrl/products/$id');
-      final body = {
-        'price': double.tryParse(priceCtrl.text) ?? 0.0,
-        'quantity': int.tryParse(qtyCtrl.text) ?? 0,
-        'condition': condCtrl.text,
-        'materials': matCtrl.text,
-        'description': descCtrl.text,
-      };
-      final resp = await http.put(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(body),
-      );
-      if (resp.statusCode >= 200 && resp.statusCode < 300) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Product updated')));
-        await _fetchProducts();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Update failed: ${resp.statusCode}')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
-    }
   }
 
   @override
@@ -332,7 +364,7 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
                           // Backend now returns full path like /uploads/filename.jpg
                           final imageUrl =
                               (imageName != null && imageName.isNotEmpty)
-                              ? '${kApiBaseUrl.replaceAll('/api', '')}$imageName'
+                              ? '${ProductService.kApiBaseUrl.replaceAll('/api', '')}$imageName'
                               : null;
 
                           return Card(

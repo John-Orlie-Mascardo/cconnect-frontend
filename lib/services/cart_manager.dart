@@ -16,8 +16,6 @@ class CartManager {
 
   /// Load cart from backend
   Future<void> loadCart() async {
-    if (_isLoaded) return; // Already loaded
-    
     final backendItems = await CartService.getCart();
     _items.clear();
     _items.addAll(backendItems);

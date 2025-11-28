@@ -4,21 +4,23 @@ import 'dart:io'; // needed to display picked images
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import '../services/product_service.dart';
+
 // Use a runtime base URL that works for web and mobile platforms
 // Web uses localhost, Android emulator uses 10.0.2.2
 // For physical devices, replace with your machine LAN IP (e.g. http://192.168.1.42:3000/api)
-String get kApiBaseUrl {
-  if (kIsWeb) {
-    // Web platform - use localhost
-    return 'http://localhost:3000/api';
-  } else if (defaultTargetPlatform == TargetPlatform.android) {
-    // Android emulator - use 10.0.2.2 to reach host machine
-    return 'http://10.0.2.2:3000/api';
-  } else {
-    // iOS simulator or other platforms - use localhost
-    return 'http://localhost:3000/api';
-  }
-}
+// String get kApiBaseUrl {
+//   if (kIsWeb) {
+//     // Web platform - use localhost
+//     return 'http://localhost:3000/api';
+//   } else if (defaultTargetPlatform == TargetPlatform.android) {
+//     // Android emulator - use 10.0.2.2 to reach host machine
+//     return 'http://10.0.2.2:3000/api';
+//   } else {
+//     // iOS simulator or other platforms - use localhost
+//     return 'http://localhost:3000/api';
+//   }
+// }
 
 // a form widget for adding a new product
 class AddProductForm extends StatefulWidget {
@@ -94,18 +96,6 @@ class _AddProductFormState extends State<AddProductForm> {
       // 0: name
       _nameController.text.trim().isEmpty ? 'Product name is required' : null,
       // 1: product ID
-      _productIDController.text.trim().isEmpty
-          ? 'Product ID is required'
-          : null,
-      // 2: price
-      () {
-        if (_priceController.text.trim().isEmpty) return 'Price is required';
-        final price = double.tryParse(_priceController.text.trim());
-        if (price == null || price <= 0) return 'Price must be greater than 0';
-        return null;
-      }(),
-      // 3: size
-      _selectedSizes.isEmpty ? 'Please select at least one size' : null,
       // 4: description
       _descriptionController.text.trim().isEmpty
           ? 'Description is required'
@@ -150,107 +140,77 @@ class _AddProductFormState extends State<AddProductForm> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              title: const Text(
-                'Missing Image',
-                style: TextStyle(color: Colors.white),
-              ),
-              content: const Text(
-                'Please add a product image before saving.',
-                style: TextStyle(color: Colors.white70),
-              ),
+              title: const Text('Image Required', style: TextStyle(color: Colors.white)),
+              content: const Text('Please select a product image.', style: TextStyle(color: Colors.white70)),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text(
-                    'OK',
-                    style: TextStyle(color: Color(0xFFEDFF00)),
-                  ),
+                  child: const Text('OK', style: TextStyle(color: Color(0xFFEDFF00))),
                 ),
               ],
             ),
           );
         });
-        return false;
       }
     }
 
-    // Focus and scroll to first error if any
     if (firstErrorIndex != null) {
-      setState(() {}); // Rebuild to show error messages
-
-      // Only request focus if it's not the size field
-      if (firstErrorIndex != 3) {
-        _focusNodes[firstErrorIndex > 3 ? firstErrorIndex - 1 : firstErrorIndex]
-            .requestFocus();
-      }
-
-      // Scroll to error field (estimate 80px per field)
+      // scroll to error
       _scrollController.animateTo(
-        250.0 + (firstErrorIndex * 80.0),
+        firstErrorIndex * 80.0, // approx height of field
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
+      // focus
+      _focusNodes[firstErrorIndex].requestFocus();
     }
 
     return isValid;
   }
 
-  /// Validates inputs and sends product data to backend
   Future<void> _saveProduct() async {
-    // run validation first
     if (!_validateFields()) {
-      return; // stop here if validation fails
+      return;
     }
-
-    // parse validated values
-    final price = double.parse(_priceController.text.trim());
-    final quantity = int.parse(_quantityController.text.trim());
-
-    // ========== API REQUEST ==========
 
     setState(() {
       _isLoading = true;
     });
 
-    final uri = Uri.parse('$kApiBaseUrl/products');
-
     try {
-      // Use multipart request to send form data + image
+      final uri = Uri.parse('${ProductService.kApiBaseUrl}/products');
       final request = http.MultipartRequest('POST', uri);
-      // Add text fields
+
       request.fields['name'] = _nameController.text.trim();
       request.fields['productId'] = _productIDController.text.trim();
-      request.fields['price'] = price.toString();
-      request.fields['sizes'] = _selectedSizes.join(','); // Send as "7,8,9,10"
+      request.fields['price'] = _priceController.text.trim();
       request.fields['description'] = _descriptionController.text.trim();
       request.fields['materials'] = _materialsController.text.trim();
       request.fields['condition'] = _conditionController.text.trim();
-      request.fields['quantity'] = quantity.toString();
+      request.fields['quantity'] = _quantityController.text.trim();
+      request.fields['sizes'] = _selectedSizes.join(','); // Send sizes as comma-separated string
 
-      // Add image file (different handling for web vs mobile)
-      if (kIsWeb) {
-        // Web: upload from bytes
-        request.files.add(
-          http.MultipartFile.fromBytes(
-            'image',
-            _selectedImage!,
-            filename: _selectedImagePath ?? 'product.jpg',
-          ),
-        );
-      } else {
-        // Mobile: upload from file path
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            'image',
-            (_selectedImage as File).path,
-          ),
-        );
+      // Add image
+      if (_selectedImage != null) {
+        if (kIsWeb) {
+          // Web: add from bytes
+          request.files.add(
+            http.MultipartFile.fromBytes(
+              'image',
+              _selectedImage,
+              filename: _selectedImagePath ?? 'image.jpg',
+            ),
+          );
+        } else {
+          // Mobile: add from file path
+          request.files.add(
+            await http.MultipartFile.fromPath('image', _selectedImage.path),
+          );
+        }
       }
 
-      debugPrint('POST -> $uri');
-      final streamed = await request.send();
-      final response = await http.Response.fromStream(streamed);
-      debugPrint('Response: ${response.statusCode} ${response.body}');
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
 
       setState(() {
         _isLoading = false;
@@ -599,19 +559,10 @@ class _AddProductFormState extends State<AddProductForm> {
               children: [
                 Row(
                   children: [
-                    const Text(
-                      'Available Sizes',
-                      style: TextStyle(color: Colors.white70, fontSize: 16),
-                    ),
-                    const SizedBox(width: 8),
-                    if (_errors[3] != null) // Show error if validation failed
-                      Text(
-                        _errors[3]!,
-                        style: const TextStyle(
-                          color: Colors.redAccent,
-                          fontSize: 12,
-                        ),
-                      ),
+                    const Text('Available Sizes', style: TextStyle(color: Colors.white70)),
+                    const SizedBox(width: 10),
+                    if (_errors[3] != null)
+                      Text(_errors[3]!, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
                   ],
                 ),
                 const SizedBox(height: 12),
