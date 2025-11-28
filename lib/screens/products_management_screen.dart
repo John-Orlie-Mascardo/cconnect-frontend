@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'add_product_form.dart';
@@ -64,24 +63,38 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
   }
 
   Future<void> _deleteProduct(String id) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
-        title: const Text('Remove product?', style: TextStyle(color: Colors.white)),
-        content: const Text('This will mark the product as removed.', style: TextStyle(color: Colors.white)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: const Color(0xFF1E1E1E),
+            title: const Text(
+              'Remove product?',
+              style: TextStyle(color: Colors.white),
+            ),
+            content: const Text(
+              'This will mark the product as removed.',
+              style: TextStyle(color: Colors.white),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Colors.white70),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text(
+                  'Remove',
+                  style: TextStyle(color: Colors.redAccent),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Remove', style: TextStyle(color: Colors.redAccent)),
-          ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
 
     if (!confirmed) return;
 
@@ -89,29 +102,49 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
       final uri = Uri.parse('${ProductService.kApiBaseUrl}/products/$id');
       final res = await http.delete(uri);
       if (res.statusCode == 200 || res.statusCode == 204) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Product removed')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Product removed')));
         await _fetchProducts();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Remove failed: ${res.statusCode}')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Remove failed: ${res.statusCode}')),
+        );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
   Future<void> _showEditDialog(Map<String, dynamic> product) async {
     final nameController = TextEditingController(text: product['name']);
-    final priceController = TextEditingController(text: product['price'].toString());
-    final descriptionController = TextEditingController(text: product['description']);
-    final materialsController = TextEditingController(text: product['materials']);
-    final conditionController = TextEditingController(text: product['condition']);
-    final quantityController = TextEditingController(text: product['quantity'].toString());
-    final stockController = TextEditingController(text: product['stock'].toString());
+    final priceController = TextEditingController(
+      text: product['price'].toString(),
+    );
+    final descriptionController = TextEditingController(
+      text: product['description'],
+    );
+    final materialsController = TextEditingController(
+      text: product['materials'],
+    );
+    final conditionController = TextEditingController(
+      text: product['condition'],
+    );
+    final quantityController = TextEditingController(
+      text: product['quantity'].toString(),
+    );
+    final stockController = TextEditingController(
+      text: product['stock'].toString(),
+    );
 
     // Parse existing sizes
     Set<int> selectedSizes = {};
     if (product['sizes'] != null && product['sizes'] is List) {
-      selectedSizes = (product['sizes'] as List).map((e) => int.parse(e.toString())).toSet();
+      selectedSizes = (product['sizes'] as List)
+          .map((e) => int.parse(e.toString()))
+          .toSet();
     } else if (product['size'] != null) {
       // Fallback for old string format
       final parts = product['size'].toString().split(',');
@@ -129,7 +162,10 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
         builder: (context, setState) {
           return AlertDialog(
             backgroundColor: Colors.grey[900],
-            title: const Text('Edit Product', style: TextStyle(color: Colors.white)),
+            title: const Text(
+              'Edit Product',
+              style: TextStyle(color: Colors.white),
+            ),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -140,7 +176,9 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Name',
                       labelStyle: TextStyle(color: Colors.white70),
-                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white30),
+                      ),
                     ),
                   ),
                   TextField(
@@ -150,7 +188,9 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Price',
                       labelStyle: TextStyle(color: Colors.white70),
-                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white30),
+                      ),
                     ),
                   ),
                   TextField(
@@ -159,7 +199,9 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Description',
                       labelStyle: TextStyle(color: Colors.white70),
-                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white30),
+                      ),
                     ),
                   ),
                   TextField(
@@ -168,7 +210,9 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Materials',
                       labelStyle: TextStyle(color: Colors.white70),
-                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white30),
+                      ),
                     ),
                   ),
                   TextField(
@@ -177,7 +221,9 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Condition',
                       labelStyle: TextStyle(color: Colors.white70),
-                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white30),
+                      ),
                     ),
                   ),
                   TextField(
@@ -187,7 +233,9 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Quantity',
                       labelStyle: TextStyle(color: Colors.white70),
-                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white30),
+                      ),
                     ),
                   ),
                   TextField(
@@ -197,13 +245,18 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Stock',
                       labelStyle: TextStyle(color: Colors.white70),
-                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white30),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
                   const Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('Sizes', style: TextStyle(color: Colors.white70, fontSize: 16)),
+                    child: Text(
+                      'Sizes',
+                      style: TextStyle(color: Colors.white70, fontSize: 16),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -228,12 +281,16 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
                         checkmarkColor: Colors.black,
                         labelStyle: TextStyle(
                           color: isSelected ? Colors.black : Colors.white,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(4),
                           side: BorderSide(
-                            color: isSelected ? const Color(0xFFEDFF00) : Colors.grey[700]!,
+                            color: isSelected
+                                ? const Color(0xFFEDFF00)
+                                : Colors.grey[700]!,
                           ),
                         ),
                       );
@@ -245,12 +302,17 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Colors.white54),
+                ),
               ),
               ElevatedButton(
                 onPressed: () async {
                   try {
-                    final uri = Uri.parse('${ProductService.kApiBaseUrl}/products/${product['_id']}');
+                    final uri = Uri.parse(
+                      '${ProductService.kApiBaseUrl}/products/${product['_id']}',
+                    );
                     final response = await http.put(
                       uri,
                       headers: {'Content-Type': 'application/json'},
@@ -262,7 +324,9 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
                         'condition': conditionController.text,
                         'quantity': int.tryParse(quantityController.text) ?? 0,
                         'stock': int.tryParse(stockController.text) ?? 0,
-                        'sizes': selectedSizes.join(','), // Send as comma-separated string
+                        'sizes': selectedSizes.join(
+                          ',',
+                        ), // Send as comma-separated string
                       }),
                     );
 
@@ -270,16 +334,18 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
                       Navigator.pop(ctx);
                       _fetchProducts(); // Refresh list
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Product updated successfully')),
+                        const SnackBar(
+                          content: Text('Product updated successfully'),
+                        ),
                       );
                     } else {
                       throw Exception('Failed to update: ${response.body}');
                     }
                   } catch (e) {
                     print('Error updating product: $e');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: $e')),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('Error: $e')));
                   }
                 },
                 style: ElevatedButton.styleFrom(

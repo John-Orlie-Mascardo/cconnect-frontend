@@ -9,7 +9,7 @@ class OrdersScreen extends StatelessWidget {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: Color.fromARGB(255, 255, 0, 0)),
         title: const Text(
           'Orders',
           style: TextStyle(fontFamily: 'kobe11Bold', color: Colors.white),

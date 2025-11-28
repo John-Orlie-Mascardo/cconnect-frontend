@@ -42,7 +42,7 @@ class CartManager {
     if (index >= 0 && index < _items.length) {
       final item = _items[index];
       final productId = item['productId'] ?? item['_id'];
-      
+
       if (productId != null) {
         await CartService.removeItem(productId.toString());
       }
@@ -61,7 +61,7 @@ class CartManager {
     if (index >= 0 && index < _items.length) {
       final item = _items[index];
       final productId = item['productId'] ?? item['_id'];
-      
+
       if (productId != null) {
         final success = await CartService.updateQuantity(
           productId.toString(),

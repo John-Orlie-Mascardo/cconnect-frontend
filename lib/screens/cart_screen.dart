@@ -1,3 +1,4 @@
+import 'package:csoles_application/screens/checkout_screen.dart';
 import 'package:flutter/material.dart';
 import '../services/cart_manager.dart';
 import '../utils/price_formatter.dart';
@@ -44,7 +45,6 @@ class _CartScreenState extends State<CartScreen> {
     return total;
   }
 
-  /// Build proper image URL for network images from backend
   String _buildImageUrl(String imagePath) {
     if (imagePath.startsWith('http')) {
       return imagePath;
@@ -293,7 +293,7 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                 ),
 
-                // Main Content: Loading, Empty State, or Cart List
+                // Main Content
                 Expanded(
                   child: _isLoading
                       ? const Center(
