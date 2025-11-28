@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'notifications_screen.dart';
 import 'chats_screen.dart';
+import '../utils/price_formatter.dart';
 
 class MyPurchasesScreen extends StatelessWidget {
   const MyPurchasesScreen({super.key});
@@ -9,10 +10,10 @@ class MyPurchasesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Mock Data: List of completed purchase items to populate the grid
     final completedProducts = [
-      {'name': 'Joshua Shoes', 'price': '₱69,420'},
-      {'name': 'Joshua Lebron Shoes', 'price': '₱420.69'},
-      {'name': 'Another Shoes', 'price': '₱12,345'},
-      {'name': 'Last Pair', 'price': '₱9,999'},
+      {'name': 'Joshua Shoes', 'price': PriceFormatter.format(69420)},
+      {'name': 'Joshua Lebron Shoes', 'price': PriceFormatter.format(420.69)},
+      {'name': 'Another Shoes', 'price': PriceFormatter.format(12345)},
+      {'name': 'Last Pair', 'price': PriceFormatter.format(9999)},
     ];
 
     return Scaffold(

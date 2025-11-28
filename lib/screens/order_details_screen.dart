@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/price_formatter.dart';
 
 class OrderDetailsScreen extends StatelessWidget {
   // TODO: This screen currently uses dummy data for UI demonstration.
@@ -195,7 +196,7 @@ class OrderDetailsScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 32),
                 const Text(
-                  '₱69.420',
+                  PriceFormatter.format(69420),
                   style: TextStyle(
                     color: Colors.white,
                     fontFamily: 'kobe11Bold',
@@ -219,8 +220,8 @@ class OrderDetailsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            _buildSummaryRow('Subtotal:', '₱69.420'),
-            _buildSummaryRow('Shipping cost:', '₱20.00'),
+            _buildSummaryRow('Subtotal:', PriceFormatter.format(69420)),
+            _buildSummaryRow('Shipping cost:', PriceFormatter.format(20.00)),
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -234,7 +235,7 @@ class OrderDetailsScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '₱89.420',
+                  PriceFormatter.format(89420),
                   style: TextStyle(
                     color: Colors.white,
                     fontFamily: 'kobe11Bold',

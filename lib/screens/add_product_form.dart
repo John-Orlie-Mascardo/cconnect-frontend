@@ -452,6 +452,8 @@ class _AddProductFormState extends State<AddProductForm> {
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 labelText: 'Price',
+                prefixText: '₱ ',
+                prefixStyle: const TextStyle(color: Colors.white),
                 labelStyle: TextStyle(color: Colors.white70),
                 errorText: _errors[2], // show error if any
                 errorStyle: const TextStyle(color: Colors.redAccent),

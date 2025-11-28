@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
 
 import '../models/product.dart';
+import '../utils/price_formatter.dart';
 
 /// Product detail screen showing full product information
 /// Features: Image gallery, size selection, add to cart, wishlist, chat, tabs
@@ -141,7 +142,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     for (final size in sizesToAdd) {
       final success = await CartManager.instance.addItem({
         'title': widget.product.name,
-        'price': '₱${widget.product.price.toStringAsFixed(2)}', // Format price as string
+        'price': PriceFormatter.format(widget.product.price), // Format price as string
         'image': widget.product.image,
         'size': size,
         'qty': 1,
@@ -368,7 +369,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                         // Price
                         Text(
-                          '₱${widget.product.price.toStringAsFixed(2)}',
+                          PriceFormatter.format(widget.product.price),
                           style: const TextStyle(
                             fontFamily: 'kobe11Bold',
                             fontWeight: FontWeight.bold,

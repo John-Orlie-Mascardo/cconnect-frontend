@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../models/product.dart';
+import '../../utils/price_formatter.dart';
 import 'edit_product_dialog.dart';
 
 class ProductCard extends StatelessWidget {
@@ -81,7 +82,7 @@ class ProductCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      '\$${product.price.toStringAsFixed(2)}',
+                      PriceFormatter.format(product.price),
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,

@@ -288,7 +288,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   InkWell(
                     onTap: () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const OrdersScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const OrdersScreen(),
+                        ),
                       );
                     },
                     child: DashboardCard(
