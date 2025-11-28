@@ -11,7 +11,9 @@ import 'login_screen.dart';
 import 'settings_screen.dart';
 import '../models/product.dart';
 import '../services/product_service.dart';
+import '../services/product_service.dart';
 import '../services/auth_service.dart';
+import '../utils/price_formatter.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -479,7 +481,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                                 return ProductCard(
                                   title: product.name,
-                                  price: '₱${product.price.toStringAsFixed(2)}',
+                                  price: PriceFormatter.format(product.price),
                                   imageUrl: imageUrl,
                                   onTap: () =>
                                       _navigateToProductDetail(product),

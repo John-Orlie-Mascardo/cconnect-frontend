@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
 import '../services/auth_service.dart';
 import 'products_management_screen.dart';
+import '../utils/price_formatter.dart';
 
 class MeScreen extends StatelessWidget {
   const MeScreen({super.key});
@@ -323,19 +324,19 @@ class MeScreen extends StatelessWidget {
                           horizontal: 16,
                           vertical: 16,
                         ),
-                        children: const [
+                        children: [
                           WishlistItem(
                             title: 'JOSHUA SHOES',
                             description:
                                 'lorem ipsum\ndetails details\nskibidi rizz',
-                            price: '₱420.69',
+                            price: PriceFormatter.format(420.69),
                           ),
                           SizedBox(height: 16),
                           WishlistItem(
                             title: 'JAMES SHOES',
                             description:
                                 'lorem ipsum\ndetails details\nskibidi rizz',
-                            price: '₱420.69',
+                            price: PriceFormatter.format(420.69),
                           ),
                         ],
                       ),

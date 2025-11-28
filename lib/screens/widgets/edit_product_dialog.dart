@@ -136,7 +136,7 @@ class _EditProductDialogState extends State<EditProductDialog> {
               TextFormField(
                 controller: _priceController,
                 style: const TextStyle(color: Colors.white),
-                decoration: _buildInputDecoration('Price', prefixText: '\$ '),
+                decoration: _buildInputDecoration('Price', prefixText: '₱ '),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) return 'Required';

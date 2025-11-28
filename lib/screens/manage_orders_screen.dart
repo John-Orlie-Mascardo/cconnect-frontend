@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'order_details_screen.dart';
+import '../utils/price_formatter.dart';
 
 class ManageOrdersScreen extends StatelessWidget {
   // TODO: This screen currently uses dummy data for UI demonstration.
@@ -35,7 +36,7 @@ class ManageOrdersScreen extends StatelessWidget {
             orderType: 'CoD',
             name: 'Joshua',
             status: 'Packaging',
-            price: '₱69.420',
+            price: PriceFormatter.format(69420),
           ),
           const SizedBox(height: 16),
           _buildOrderItem(
@@ -45,7 +46,7 @@ class ManageOrdersScreen extends StatelessWidget {
             orderType: 'Meetup',
             name: 'Orlie',
             status: 'In Progress',
-            price: '₱420.69',
+            price: PriceFormatter.format(420.69),
           ),
         ],
       ),

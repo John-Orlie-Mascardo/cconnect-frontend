@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'add_product_form.dart';
 
 import '../services/product_service.dart';
+import '../utils/price_formatter.dart';
 
 // runtime API base URL (Android emulator uses 10.0.2.2)
 // String get kApiBaseUrl {
@@ -410,7 +411,7 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
                                         ),
                                         const SizedBox(height: 6),
                                         Text(
-                                          'Price: ${p['price'] ?? '-'}',
+                                          'Price: ${PriceFormatter.format(p['price'])}',
                                           style: const TextStyle(
                                             color: Colors.white70,
                                           ),
