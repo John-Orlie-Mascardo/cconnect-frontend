@@ -1,3 +1,4 @@
+import 'package:csoles_application/screens/checkout_screen.dart';
 import 'package:flutter/material.dart';
 import '../services/cart_manager.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -32,7 +33,6 @@ class _CartScreenState extends State<CartScreen> {
 
   double get _totalPrice {
     if (_cartItems.isEmpty) return 0.0;
-    // Parse price string (e.g., "₱69,420") to double
     double total = 0.0;
     for (var item in _cartItems) {
       String priceStr = item['price'].toString().replaceAll(
@@ -40,23 +40,78 @@ class _CartScreenState extends State<CartScreen> {
         '',
       );
       double price = double.tryParse(priceStr) ?? 0.0;
-      total += price;
+      int quantity = item['quantity'] ?? 1;
+      total += price * quantity;
     }
     return total;
   }
 
-  /// Build proper image URL for network images from backend
   String _buildImageUrl(String imagePath) {
-    // If already a full URL, return as is
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
-    
-    // Construct full URL from relative path
-    // Backend serves images at http://localhost:3000/uploads/filename.jpg
     final baseUrl = 'http://localhost:3000';
     final path = imagePath.startsWith('/') ? imagePath : '/$imagePath';
     return '$baseUrl$path';
+  }
+
+  // --- MODIFIED INCREMENT FUNCTION ---
+  Future<void> _incrementQuantity(int index) async {
+    final item = _cartItems[index];
+    int currentQuantity = item['quantity'] ?? 1;
+
+    // Check stock limit (Ensure your backend/item map sends a 'stock' key)
+    // If no stock key exists, it defaults to 99 to prevent crashing
+    int maxStock = item['stock'] ?? 99;
+
+    if (currentQuantity < maxStock) {
+      int newQuantity = currentQuantity + 1;
+
+      final success = await CartManager.instance.updateQuantity(
+        index,
+        newQuantity,
+      );
+      if (success && mounted) {
+        setState(() {});
+      }
+    } else {
+      // User tried to go past limit
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Sorry, we only have $maxStock of this item in stock.',
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.red[800],
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  // --- MODIFIED DECREMENT FUNCTION ---
+  Future<void> _decrementQuantity(int index) async {
+    int currentQuantity = _cartItems[index]['quantity'] ?? 1;
+    int newQuantity = currentQuantity - 1;
+
+    // Check if new quantity is 0 (or less)
+    if (newQuantity <= 0) {
+      // Logic: Remove from cart immediately
+      await CartManager.instance.removeItem(index);
+      if (mounted) {
+        setState(() {});
+      }
+    } else {
+      // Logic: Update normally
+      final success = await CartManager.instance.updateQuantity(
+        index,
+        newQuantity,
+      );
+      if (success && mounted) {
+        setState(() {});
+      }
+    }
   }
 
   @override
@@ -167,21 +222,25 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                 ),
 
-                // Main Content: Loading, Empty State, or Cart List
+                // Main Content
                 Expanded(
                   child: _isLoading
                       ? const Center(
                           child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFEDFF00)),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Color(0xFFEDFF00),
+                            ),
                           ),
                         )
                       : isEmpty
-                          ? _buildEmptyState()
-                          : ListView.builder(
+                      ? _buildEmptyState()
+                      : ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           itemCount: _cartItems.length,
                           itemBuilder: (context, index) {
                             final item = _cartItems[index];
+                            final int quantity = item['quantity'] ?? 1;
+
                             return Container(
                               margin: const EdgeInsets.only(bottom: 16),
                               padding: const EdgeInsets.all(12),
@@ -191,9 +250,10 @@ class _CartScreenState extends State<CartScreen> {
                               ),
                               child: Row(
                                 children: [
+                                  // Product Image
                                   Container(
-                                    width: 60,
-                                    height: 60,
+                                    width: 80,
+                                    height: 80,
                                     decoration: BoxDecoration(
                                       color: Colors.grey[800],
                                       borderRadius: BorderRadius.circular(4),
@@ -214,9 +274,12 @@ class _CartScreenState extends State<CartScreen> {
                                         : null,
                                   ),
                                   const SizedBox(width: 16),
+
+                                  // Product Details
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           item['title'],
@@ -225,7 +288,10 @@ class _CartScreenState extends State<CartScreen> {
                                             color: Colors.white,
                                             fontSize: 16,
                                           ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
+                                        const SizedBox(height: 4),
                                         Text(
                                           item['price'],
                                           style: const TextStyle(
@@ -234,19 +300,158 @@ class _CartScreenState extends State<CartScreen> {
                                             fontSize: 14,
                                           ),
                                         ),
+                                        const SizedBox(height: 12),
+
+                                        // Quantity Controls
+                                        Row(
+                                          children: [
+                                            // Decrement Button
+                                            Material(
+                                              color: Colors.transparent,
+                                              child: InkWell(
+                                                onTap: () =>
+                                                    _decrementQuantity(index),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                                child: Container(
+                                                  width: 32,
+                                                  height: 32,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.grey[800],
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          4,
+                                                        ),
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.remove,
+                                                    color: Colors.white,
+                                                    size: 18,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+
+                                            // Quantity Display
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                  ),
+                                              child: Text(
+                                                '$quantity',
+                                                style: const TextStyle(
+                                                  fontFamily: 'kobe11',
+                                                  color: Colors.white,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+
+                                            // Increment Button
+                                            Material(
+                                              color: Colors.transparent,
+                                              child: InkWell(
+                                                onTap: () =>
+                                                    _incrementQuantity(index),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                                child: Container(
+                                                  width: 32,
+                                                  height: 32,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.grey[800],
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          4,
+                                                        ),
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.add,
+                                                    color: Colors.white,
+                                                    size: 18,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+
+                                            const Spacer(),
+
+                                            // Delete Button (Manual remove)
+                                            IconButton(
+                                              icon: const Icon(
+                                                Icons.delete_outline,
+                                                color: Colors.red,
+                                              ),
+                                              onPressed: () {
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) => AlertDialog(
+                                                    backgroundColor:
+                                                        Colors.grey[900],
+                                                    title: const Text(
+                                                      'Remove Item',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontFamily:
+                                                            'kobe11Bold',
+                                                      ),
+                                                    ),
+                                                    content: const Text(
+                                                      'Are you sure you want to remove this item from your cart?',
+                                                      style: TextStyle(
+                                                        color: Colors.white70,
+                                                        fontFamily: 'kobe11',
+                                                      ),
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.pop(
+                                                              context,
+                                                            ),
+                                                        child: const Text(
+                                                          'Cancel',
+                                                          style: TextStyle(
+                                                            color:
+                                                                Colors.white54,
+                                                            fontFamily:
+                                                                'kobe11',
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () async {
+                                                          Navigator.pop(
+                                                            context,
+                                                          );
+                                                          await CartManager
+                                                              .instance
+                                                              .removeItem(
+                                                                index,
+                                                              );
+                                                          setState(() {});
+                                                        },
+                                                        child: const Text(
+                                                          'Remove',
+                                                          style: TextStyle(
+                                                            color: Colors.red,
+                                                            fontFamily:
+                                                                'kobe11Bold',
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        ),
                                       ],
                                     ),
                                   ),
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.delete_outline,
-                                      color: Colors.red,
-                                    ),
-                                    onPressed: () async {
-                                      await CartManager.instance.removeItem(index);
-                                      setState(() {});
-                                    },
-                                    ),
                                 ],
                               ),
                             );
@@ -295,7 +500,11 @@ class _CartScreenState extends State<CartScreen> {
                           onPressed: isEmpty
                               ? null
                               : () {
-                                  // Checkout logic
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => CheckoutScreen(),
+                                    ),
+                                  );
                                 },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: isEmpty
