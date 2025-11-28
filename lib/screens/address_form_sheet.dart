@@ -28,7 +28,6 @@ class _AddressFormSheetState extends State<AddressFormSheet> {
   final _formKey = GlobalKey<FormState>();
 
   // Text controllers for each field
-  late TextEditingController _regionCtrl;
   late TextEditingController _provinceCtrl;
   late TextEditingController _cityCtrl;
   late TextEditingController _barangayCtrl;
@@ -36,9 +35,9 @@ class _AddressFormSheetState extends State<AddressFormSheet> {
   late TextEditingController _streetDetailsCtrl;
 
   // Focus nodes for keyboard navigation
-  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+  final List<FocusNode> _focusNodes = List.generate(5, (_) => FocusNode());
   // Index mapping:
-  // 0: Region, 1: Province, 2: City, 3: Barangay, 4: Postal Code, 5: Street Details
+  // 0: Province, 1: City, 2: Barangay, 3: Postal Code, 4: Street Details
 
   bool _isDefault = false;
 
@@ -48,7 +47,6 @@ class _AddressFormSheetState extends State<AddressFormSheet> {
 
     // If editing existing address, pre-fill the fields
     final addr = widget.existingAddress;
-    _regionCtrl = TextEditingController(text: addr?.region ?? '');
     _provinceCtrl = TextEditingController(text: addr?.province ?? '');
     _cityCtrl = TextEditingController(text: addr?.city ?? '');
     _barangayCtrl = TextEditingController(text: addr?.barangay ?? '');
@@ -60,7 +58,6 @@ class _AddressFormSheetState extends State<AddressFormSheet> {
   @override
   void dispose() {
     // Clean up controllers and focus nodes to prevent memory leaks
-    _regionCtrl.dispose();
     _provinceCtrl.dispose();
     _cityCtrl.dispose();
     _barangayCtrl.dispose();
@@ -80,7 +77,6 @@ class _AddressFormSheetState extends State<AddressFormSheet> {
 
     final address = Address(
       id: widget.existingAddress?.id, // Preserve existing ID when editing
-      region: _regionCtrl.text.trim(),
       province: _provinceCtrl.text.trim(),
       city: _cityCtrl.text.trim(),
       barangay: _barangayCtrl.text.trim(),
@@ -119,44 +115,36 @@ class _AddressFormSheetState extends State<AddressFormSheet> {
               ),
               const SizedBox(height: 20),
 
-              // Region field
-              _buildTextField(
-                _regionCtrl,
-                'Region',
-                focusNode: _focusNodes[0],
-                onSubmitted: (_) => _focusNodes[1].requestFocus(),
-              ),
-
               // Province field
               _buildTextField(
                 _provinceCtrl,
                 'Province',
-                focusNode: _focusNodes[1],
-                onSubmitted: (_) => _focusNodes[2].requestFocus(),
+                focusNode: _focusNodes[0],
+                onSubmitted: (_) => _focusNodes[1].requestFocus(),
               ),
 
               // City field
               _buildTextField(
                 _cityCtrl,
                 'City',
-                focusNode: _focusNodes[2],
-                onSubmitted: (_) => _focusNodes[3].requestFocus(),
+                focusNode: _focusNodes[1],
+                onSubmitted: (_) => _focusNodes[2].requestFocus(),
               ),
 
               // Barangay field
               _buildTextField(
                 _barangayCtrl,
                 'Barangay',
-                focusNode: _focusNodes[3],
-                onSubmitted: (_) => _focusNodes[4].requestFocus(),
+                focusNode: _focusNodes[2],
+                onSubmitted: (_) => _focusNodes[3].requestFocus(),
               ),
 
               // Postal Code field
               _buildTextField(
                 _postalCodeCtrl,
                 'Postal Code',
-                focusNode: _focusNodes[4],
-                onSubmitted: (_) => _focusNodes[5].requestFocus(),
+                focusNode: _focusNodes[3],
+                onSubmitted: (_) => _focusNodes[4].requestFocus(),
               ),
 
               // Street Details field (multiline, last field)
@@ -164,7 +152,7 @@ class _AddressFormSheetState extends State<AddressFormSheet> {
                 _streetDetailsCtrl,
                 'Street Name, Building, House No.',
                 maxLines: 2,
-                focusNode: _focusNodes[5],
+                focusNode: _focusNodes[4],
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => _submit(), // Save when pressing done
               ),

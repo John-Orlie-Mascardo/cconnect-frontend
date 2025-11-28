@@ -4,11 +4,92 @@ import 'my_purchases_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
 import '../services/auth_service.dart';
+import '../services/wishlist_service.dart';
+import '../services/cart_manager.dart';
 import 'products_management_screen.dart';
 import '../utils/price_formatter.dart';
 
-class MeScreen extends StatelessWidget {
+class MeScreen extends StatefulWidget {
   const MeScreen({super.key});
+
+  @override
+  State<MeScreen> createState() => _MeScreenState();
+}
+
+class _MeScreenState extends State<MeScreen> {
+  List<Map<String, dynamic>> _wishlistItems = [];
+  bool _isLoadingWishlist = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWishlist();
+  }
+
+  Future<void> _loadWishlist() async {
+    setState(() => _isLoadingWishlist = true);
+    final items = await WishlistService.getWishlist();
+    if (mounted) {
+      setState(() {
+        _wishlistItems = items;
+        _isLoadingWishlist = false;
+      });
+    }
+  }
+
+  Future<void> _removeFromWishlist(String productId) async {
+    final success = await WishlistService.removeFromWishlist(productId);
+    if (success) {
+      _loadWishlist(); // Reload wishlist
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Removed from wishlist'),
+            backgroundColor: Color(0xFFEDFF00),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to remove from wishlist'),
+            backgroundColor: Colors.redAccent,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _addToCart(Map<String, dynamic> item) async {
+    final success = await CartManager.instance.addItem({
+      'title': item['title'],
+      'price': item['price'],
+      'image': item['image'],
+      'productId': item['productId'],
+      'quantity': 1,
+    });
+
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Added to cart'),
+          backgroundColor: Color(0xFFEDFF00),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to add to cart'),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -317,29 +398,66 @@ class MeScreen extends StatelessWidget {
                       ),
 
                       // Wishlist Items List: Scrollable area for saved items
-                      ListView(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 16,
-                        ),
-                        children: [
-                          WishlistItem(
-                            title: 'JOSHUA SHOES',
-                            description:
-                                'lorem ipsum\ndetails details\nskibidi rizz',
-                            price: PriceFormatter.format(420.69),
-                          ),
-                          SizedBox(height: 16),
-                          WishlistItem(
-                            title: 'JAMES SHOES',
-                            description:
-                                'lorem ipsum\ndetails details\nskibidi rizz',
-                            price: PriceFormatter.format(420.69),
-                          ),
-                        ],
-                      ),
+                      _isLoadingWishlist
+                          ? const Padding(
+                              padding: EdgeInsets.all(32.0),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFFEDFF00),
+                                ),
+                              ),
+                            )
+                          : _wishlistItems.isEmpty
+                              ? Padding(
+                                  padding: const EdgeInsets.all(32.0),
+                                  child: Center(
+                                    child: Column(
+                                      children: const [
+                                        Icon(
+                                          Icons.favorite_border,
+                                          size: 64,
+                                          color: Colors.white24,
+                                        ),
+                                        SizedBox(height: 16),
+                                        Text(
+                                          'Your wishlist is empty',
+                                          style: TextStyle(
+                                            color: Colors.white54,
+                                            fontFamily: 'kobe11',
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              : ListView.separated(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 16,
+                                  ),
+                                  itemCount: _wishlistItems.length,
+                                  separatorBuilder: (context, index) =>
+                                      const SizedBox(height: 16),
+                                  itemBuilder: (context, index) {
+                                    final item = _wishlistItems[index];
+                                    return WishlistItem(
+                                      title: item['title'] ?? 'Product',
+                                      description: item['description'] ??
+                                          'No description available',
+                                      price: PriceFormatter.format(
+                                        item['price'] ?? 0,
+                                      ),
+                                      imageUrl: item['image'],
+                                      onAddToCart: () => _addToCart(item),
+                                      onRemove: () => _removeFromWishlist(
+                                        item['productId'],
+                                      ),
+                                    );
+                                  },
+                                ),
                     ],
                   ),
                 );
@@ -423,13 +541,27 @@ class WishlistItem extends StatelessWidget {
   final String title;
   final String description;
   final String price;
+  final String? imageUrl;
+  final VoidCallback? onAddToCart;
+  final VoidCallback? onRemove;
 
   const WishlistItem({
     super.key,
     required this.title,
     required this.description,
     required this.price,
+    this.imageUrl,
+    this.onAddToCart,
+    this.onRemove,
   });
+
+  String _buildImageUrl(String? imagePath) {
+    if (imagePath == null) return '';
+    if (imagePath.startsWith('http')) return imagePath;
+    final baseUrl = 'http://localhost:3000';
+    final path = imagePath.startsWith('/') ? imagePath : '/$imagePath';
+    return '$baseUrl$path';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -438,17 +570,29 @@ class WishlistItem extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          // Product Image Placeholder
+          // Product Image
           Container(
             width: 110,
             height: 110,
-            color: Colors.grey[800],
-            alignment: Alignment.center,
-            child: const Text(
-              'SHOE\nPIC',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white, letterSpacing: 1.2),
+            decoration: BoxDecoration(
+              color: Colors.grey[800],
+              borderRadius: BorderRadius.circular(4),
+              image: imageUrl != null && imageUrl!.isNotEmpty
+                  ? DecorationImage(
+                      image: NetworkImage(_buildImageUrl(imageUrl)),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
+            child: imageUrl == null || imageUrl!.isEmpty
+                ? const Center(
+                    child: Icon(
+                      Icons.image_not_supported,
+                      color: Colors.white24,
+                      size: 40,
+                    ),
+                  )
+                : null,
           ),
           const SizedBox(width: 16),
 
@@ -457,23 +601,41 @@ class WishlistItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontFamily: 'kobe11',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontFamily: 'kobe11',
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    // Delete button
+                    if (onRemove != null)
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        onPressed: onRemove,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Text(
                   description,
                   style: const TextStyle(
                     fontFamily: 'kobe11',
-                    fontSize: 16,
+                    fontSize: 14,
                     color: Colors.white70,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 16),
 
@@ -507,23 +669,26 @@ class WishlistItem extends StatelessWidget {
                     // Add to Cart Action
                     Flexible(
                       flex: 6,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 10,
-                          horizontal: 12,
-                        ),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white, width: 2),
-                          color: Colors.black,
-                        ),
-                        child: const FittedBox(
-                          child: Text(
-                            'Add to Cart',
-                            style: TextStyle(
-                              fontFamily: 'kobe11',
-                              fontSize: 16,
-                              color: Colors.white,
+                      child: InkWell(
+                        onTap: onAddToCart,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 10,
+                            horizontal: 12,
+                          ),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.white, width: 2),
+                            color: Colors.black,
+                          ),
+                          child: const FittedBox(
+                            child: Text(
+                              'Add to Cart',
+                              style: TextStyle(
+                                fontFamily: 'kobe11',
+                                fontSize: 16,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),

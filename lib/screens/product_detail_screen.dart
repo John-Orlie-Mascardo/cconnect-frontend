@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'cart_screen.dart';
 import 'me_screen.dart';
 import '../services/cart_manager.dart';
+import '../services/wishlist_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
 
@@ -39,6 +40,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void initState() {
     super.initState();
     _calculateAvailableSizes();
+    _checkWishlistStatus();
+  }
+
+  /// Check if product is already in wishlist
+  Future<void> _checkWishlistStatus() async {
+    final inWishlist = await WishlistService.isInWishlist(widget.product.id);
+    if (mounted) {
+      setState(() {
+        _isFavorite = inWishlist;
+      });
+    }
   }
 
   void _calculateAvailableSizes() {
@@ -193,7 +205,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   /// Toggle wishlist/favorite
-  void _toggleFavorite() {
+  Future<void> _toggleFavorite() async {
     // Check if user is logged in
     if (FirebaseAuth.instance.currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -211,9 +223,64 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
+    // Optimistic UI update
+    final newState = !_isFavorite;
     setState(() {
-      _isFavorite = !_isFavorite;
+      _isFavorite = newState;
     });
+
+    // Call backend
+    bool success;
+    if (newState) {
+      // Add to wishlist
+      success = await WishlistService.addToWishlist(
+        widget.product.id,
+        productData: {
+          'title': widget.product.name,
+          'price': widget.product.price,
+          'image': widget.product.image,
+          'description': widget.product.description,
+        },
+      );
+    } else {
+      // Remove from wishlist
+      success = await WishlistService.removeFromWishlist(widget.product.id);
+    }
+
+    if (!success) {
+      // Revert on failure
+      if (mounted) {
+        setState(() {
+          _isFavorite = !newState;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              newState
+                  ? 'Failed to add to wishlist'
+                  : 'Failed to remove from wishlist',
+            ),
+            backgroundColor: Colors.redAccent,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } else {
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              newState
+                  ? 'Added to wishlist'
+                  : 'Removed from wishlist',
+            ),
+            backgroundColor: const Color(0xFFEDFF00),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   /// Handle chat button

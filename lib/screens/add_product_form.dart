@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart'; // for image picking
-import 'dart:io'; // needed to display picked images
+// import 'dart:io'; // needed to display picked images
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
@@ -72,7 +72,7 @@ class _AddProductFormState extends State<AddProductForm> {
       } else {
         // mobile platform: store as file
         setState(() {
-          _selectedImage = File(pickedFile.path);
+          // _selectedImage = File(pickedFile.path);
           _selectedImagePath = pickedFile.path;
         });
       }
@@ -203,9 +203,9 @@ class _AddProductFormState extends State<AddProductForm> {
           );
         } else {
           // Mobile: add from file path
-          request.files.add(
-            await http.MultipartFile.fromPath('image', _selectedImage.path),
-          );
+          // request.files.add(
+          //   await http.MultipartFile.fromPath('image', _selectedImage.path),
+          // );
         }
       }
 
@@ -392,7 +392,7 @@ class _AddProductFormState extends State<AddProductForm> {
                           borderRadius: BorderRadius.circular(8),
                           child: kIsWeb
                               ? Image.memory(_selectedImage!, fit: BoxFit.cover)
-                              : Image.file(_selectedImage!, fit: BoxFit.cover),
+                              : const SizedBox(), // Image.file(_selectedImage!, fit: BoxFit.cover),
                         ),
                 ),
               ),

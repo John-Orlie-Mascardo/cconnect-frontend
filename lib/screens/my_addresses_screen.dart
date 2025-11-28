@@ -339,7 +339,7 @@ class _MyAddressesScreenState extends State<MyAddressesScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              '${address.region}, ${address.province}, ${address.city}, ${address.barangay}',
+              '${address.province}, ${address.city}, ${address.barangay}',
               style: const TextStyle(color: Colors.white70, fontSize: 14),
             ),
             const SizedBox(height: 8),

@@ -1,10 +1,61 @@
 import 'package:flutter/material.dart';
 import '../utils/price_formatter.dart';
+import '../models/order.dart';
+import '../services/order_service.dart';
 
-class OrderDetailsScreen extends StatelessWidget {
-  // TODO: This screen currently uses dummy data for UI demonstration.
-  // Replace with actual data fetching logic when integrating with the backend.
-  const OrderDetailsScreen({super.key});
+class OrderDetailsScreen extends StatefulWidget {
+  final Order order;
+  final bool isAdmin;
+
+  const OrderDetailsScreen({
+    super.key,
+    required this.order,
+    this.isAdmin = true,
+  });
+
+  @override
+  State<OrderDetailsScreen> createState() => _OrderDetailsScreenState();
+}
+
+class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
+  late String _currentStatus;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentStatus = widget.order.status;
+  }
+
+  Future<void> _updateStatus(String newStatus) async {
+    setState(() => _isLoading = true);
+    final success = await OrderService.updateOrderStatus(widget.order.id, newStatus);
+    setState(() => _isLoading = false);
+
+    if (success) {
+      setState(() => _currentStatus = newStatus);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Order status updated to $newStatus'),
+            backgroundColor: const Color(0xFFEDFF00),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to update status'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,13 +81,13 @@ class OrderDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header: Order ID and Delete
+            // Header: Order ID
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  '#01015',
-                  style: TextStyle(
+                Text(
+                  '#${widget.order.id.substring(widget.order.id.length - 5)}',
+                  style: const TextStyle(
                     color: Colors.white,
                     fontFamily: 'kobe11Bold',
                     fontSize: 28,
@@ -49,11 +100,6 @@ class OrderDetailsScreen extends StatelessWidget {
                     fontFamily: 'kobe11',
                     fontSize: 14,
                   ),
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.white),
-                  onPressed: () {},
                 ),
               ],
             ),
@@ -81,9 +127,9 @@ class OrderDetailsScreen extends StatelessWidget {
                         vertical: 8,
                       ),
                       color: Colors.grey[800],
-                      child: const Text(
-                        'CoD',
-                        style: TextStyle(
+                      child: Text(
+                        widget.order.paymentMethod,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontFamily: 'kobe11',
                           fontSize: 16,
@@ -111,17 +157,29 @@ class OrderDetailsScreen extends StatelessWidget {
                       ),
                       color: Colors.grey[800],
                       child: Row(
-                        children: const [
+                        children: [
                           Text(
-                            'Packaging',
-                            style: TextStyle(
+                            _currentStatus,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontFamily: 'kobe11',
                               fontSize: 16,
                             ),
                           ),
-                          SizedBox(width: 8),
-                          Icon(Icons.edit, color: Colors.white, size: 16),
+                          if (widget.isAdmin) ...[
+                            const SizedBox(width: 8),
+                            if (_isLoading)
+                              const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            else
+                              const Icon(Icons.edit, color: Colors.white, size: 16),
+                          ],
                         ],
                       ),
                     ),
@@ -134,26 +192,20 @@ class OrderDetailsScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Customer Info
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                Text(
-                  'Customer',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'kobe11Bold',
-                    fontSize: 18,
-                  ),
-                ),
-                Icon(Icons.edit, color: Colors.white, size: 20),
-              ],
+            const Text(
+              'Customer',
+              style: TextStyle(
+                color: Colors.white,
+                fontFamily: 'kobe11Bold',
+                fontSize: 18,
+              ),
             ),
             const SizedBox(height: 16),
-            _buildCustomerRow('Customer:', 'Joshua'),
-            _buildCustomerRow('Number:', '1111101012'),
+            _buildCustomerRow('Name:', widget.order.customerName),
+            _buildCustomerRow('Number:', widget.order.phoneNumber),
             _buildCustomerRow(
               'Address:',
-              'Tanukikoji, Blk 31,\nLot 21\nAsahigaoka,\nSapporo Hokkaido,\nNorth Japan,\n〒064-0941:',
+              widget.order.deliveryAddress.fullAddress,
             ),
 
             const SizedBox(height: 24),
@@ -161,9 +213,9 @@ class OrderDetailsScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Items Header
-            const Text(
-              'Items: 1',
-              style: TextStyle(
+            Text(
+              'Items: ${widget.order.items.length}',
+              style: const TextStyle(
                 color: Colors.white,
                 fontFamily: 'kobe11',
                 fontSize: 16,
@@ -171,40 +223,56 @@ class OrderDetailsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Item Row
-            Row(
-              children: [
-                Container(width: 60, height: 60, color: Colors.grey[600]),
-                const SizedBox(width: 16),
-                const Expanded(
-                  child: Text(
-                    'Joshua Shoes',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontFamily: 'kobe11Bold',
-                      fontSize: 20,
-                    ),
+            // Items List
+            ...widget.order.items.map((item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        color: Colors.grey[800],
+                        child: item.image != null
+                            ? Image.network(
+                                _buildImageUrl(item.image!),
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.image_not_supported,
+                                    color: Colors.white24),
+                              )
+                            : const Icon(Icons.shopping_bag, color: Colors.white24),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          item.name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'kobe11Bold',
+                            fontSize: 20,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        'x${item.quantity}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'kobe11',
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(width: 32),
+                      Text(
+                        PriceFormatter.format(item.price * item.quantity),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'kobe11Bold',
+                          fontSize: 20,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const Text(
-                  '1',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'kobe11',
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(width: 32),
-                const Text(
-                  PriceFormatter.format(69420),
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'kobe11Bold',
-                    fontSize: 20,
-                  ),
-                ),
-              ],
-            ),
+                )),
 
             const SizedBox(height: 24),
             const Divider(color: Colors.white24),
@@ -220,13 +288,13 @@ class OrderDetailsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            _buildSummaryRow('Subtotal:', PriceFormatter.format(69420)),
-            _buildSummaryRow('Shipping cost:', PriceFormatter.format(20.00)),
+            _buildSummaryRow('Subtotal:', PriceFormatter.format(widget.order.subtotal)),
+            _buildSummaryRow('Shipping cost:', PriceFormatter.format(widget.order.shippingFee)),
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                Text(
+              children: [
+                const Text(
                   'TOTAL:',
                   style: TextStyle(
                     color: Colors.white,
@@ -235,8 +303,8 @@ class OrderDetailsScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  PriceFormatter.format(89420),
-                  style: TextStyle(
+                  PriceFormatter.format(widget.order.total),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontFamily: 'kobe11Bold',
                     fontSize: 24,
@@ -247,48 +315,64 @@ class OrderDetailsScreen extends StatelessWidget {
 
             const SizedBox(height: 48),
 
-            // Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 50,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[700],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      'Complete Order',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontFamily: 'kobe11',
-                        fontSize: 16,
+            // Action Buttons (Only for Admin)
+            if (widget.isAdmin && _currentStatus != 'Delivered' && _currentStatus != 'Cancelled')
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: _isLoading ? null : () => _updateStatus('Delivered'),
+                      child: Container(
+                        height: 50,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEDFF00),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.black,
+                                ),
+                              )
+                            : const Text(
+                                'Complete Order',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontFamily: 'kobe11Bold',
+                                  fontSize: 16,
+                                ),
+                              ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Container(
-                    height: 50,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[700],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      'Refund',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontFamily: 'kobe11',
-                        fontSize: 16,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: InkWell(
+                      onTap: _isLoading ? null : () => _updateStatus('Cancelled'),
+                      child: Container(
+                        height: 50,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[800],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'Cancel Order',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'kobe11',
+                            fontSize: 16,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
             const SizedBox(height: 24),
           ],
         ),
@@ -353,5 +437,12 @@ class OrderDetailsScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _buildImageUrl(String imagePath) {
+    if (imagePath.startsWith('http')) return imagePath;
+    final baseUrl = 'http://localhost:3000';
+    final path = imagePath.startsWith('/') ? imagePath : '/$imagePath';
+    return '$baseUrl$path';
   }
 }

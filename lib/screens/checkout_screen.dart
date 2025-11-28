@@ -41,7 +41,12 @@ import 'my_addresses_screen.dart';
 /// - Backend should notify owner via orders management screen
 
 class CheckoutScreen extends StatefulWidget {
-  const CheckoutScreen({super.key});
+  final String? preselectedPaymentMethod;
+  
+  const CheckoutScreen({
+    super.key,
+    this.preselectedPaymentMethod,
+  });
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -61,6 +66,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedPaymentMethod = widget.preselectedPaymentMethod;
     _loadAddresses();
   }
 
@@ -79,7 +85,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           orElse: () => addresses.isNotEmpty
               ? addresses.first
               : Address(
-                  region: '',
                   province: '',
                   city: '',
                   barangay: '',
@@ -132,7 +137,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   /// Place order - sends to backend
   Future<void> _placeOrder() async {
     // Validation
-    if (_selectedAddress == null || _selectedAddress!.region.isEmpty) {
+    if (_selectedAddress == null || _selectedAddress!.province.isEmpty) {
       _showSnackBar('Please select a delivery address', isError: true);
       return;
     }
@@ -167,7 +172,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'phoneNumber': user.phoneNumber ?? 'N/A', // TODO: Get from user profile
         'deliveryAddress': _selectedAddress!.toJson(),
         'deliveryMethod': _selectedDeliveryMethod,
-        'paymentMethod': _selectedPaymentMethod,
+        'paymentMethod': _selectedPaymentMethod == 'cash'
+            ? _selectedDeliveryMethod
+            : _selectedPaymentMethod,
         'items': _cartItems
             .map(
               (item) => {
@@ -190,6 +197,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'shippingFee': _shippingFee,
         'total': _total,
       };
+
+      // Debug: Print order data
+      print('=== ORDER DATA ===');
+      print(jsonEncode(orderData));
+      print('==================');
 
       // TODO: Replace with actual backend endpoint
       final uri = Uri.parse('http://localhost:3000/api/orders/create');
@@ -411,12 +423,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          if (_selectedAddress != null && _selectedAddress!.region.isNotEmpty)
+          if (_selectedAddress != null && _selectedAddress!.province.isNotEmpty)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${_selectedAddress!.region}, ${_selectedAddress!.province}, ${_selectedAddress!.city}, ${_selectedAddress!.barangay}',
+                  '${_selectedAddress!.province}, ${_selectedAddress!.city}, ${_selectedAddress!.barangay}',
                   style: const TextStyle(color: Colors.white70, fontSize: 14),
                 ),
                 const SizedBox(height: 4),
@@ -535,11 +547,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           const SizedBox(height: 12),
           Row(
             children: [
-              _buildMethodButton('CoD', 'cod', _selectedDeliveryMethod),
+              _buildMethodButton('CoD', 'CoD', _selectedDeliveryMethod),
               const SizedBox(width: 8),
-              _buildMethodButton('CoP', 'cop', _selectedDeliveryMethod),
+              _buildMethodButton('CoP', 'CoP', _selectedDeliveryMethod),
               const SizedBox(width: 8),
-              _buildMethodButton('Meetup', 'meetup', _selectedDeliveryMethod),
+              _buildMethodButton('Meetup', 'Meetup', _selectedDeliveryMethod),
             ],
           ),
         ],
@@ -577,7 +589,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               const SizedBox(width: 8),
               _buildMethodButton(
                 'GCash',
-                'gcash',
+                'E-Wallet',
                 _selectedPaymentMethod,
                 isPayment: true,
               ),

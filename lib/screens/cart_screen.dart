@@ -14,6 +14,7 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   bool _isLoading = true;
+  String? _selectedPaymentMethod; // 'cod', 'cop', 'meetup', 'gcash'
 
   // Access cart items from singleton
   List<Map<String, dynamic>> get _cartItems => CartManager.instance.items;
@@ -535,6 +536,7 @@ class _CartScreenState extends State<CartScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // Total Price Row
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -562,14 +564,78 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                         ],
                       ),
+                      
+                      if (!isEmpty) ...[
+                        const SizedBox(height: 24),
+                        
+                        // Payment Method Label
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'PAYMENT METHOD',
+                            style: TextStyle(
+                              fontFamily: 'kobe11',
+                              fontSize: 14,
+                              letterSpacing: 1.5,
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        
+                        // Payment Method Buttons
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildPaymentMethodButton('CoD', 'CoD'),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _buildPaymentMethodButton('CoP', 'CoP'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildPaymentMethodButton('Meetup', 'Meetup'),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _buildPaymentMethodButton('GCash', 'E-Wallet'),
+                            ),
+                          ],
+                        ),
+                      ],
+                      
                       const SizedBox(height: 24),
+                      
+                      // Checkout Button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: isEmpty
                               ? null
                               : () {
-                                  // TODO: Add checkout navigation
+                                  if (_selectedPaymentMethod == null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Please select a payment method'),
+                                        backgroundColor: Colors.redAccent,
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => CheckoutScreen(
+                                        preselectedPaymentMethod: _selectedPaymentMethod,
+                                      ),
+                                    ),
+                                  );
                                 },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: isEmpty
@@ -598,6 +664,40 @@ class _CartScreenState extends State<CartScreen> {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethodButton(String label, String value) {
+    final isSelected = _selectedPaymentMethod == value;
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedPaymentMethod = value;
+        });
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFEDFF00) : Colors.grey[800],
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? const Color(0xFFEDFF00) : Colors.grey[700]!,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: isSelected ? 'kobe11Bold' : 'kobe11',
+              fontSize: 14,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              color: isSelected ? Colors.black : Colors.white,
+            ),
+          ),
         ),
       ),
     );
