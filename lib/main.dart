@@ -26,7 +26,14 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Simple Auth App',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        primarySwatch: Colors.blue,
+        useMaterial3: true,
+        scaffoldBackgroundColor: Colors.black,
+        dialogBackgroundColor: Colors.grey[900],
+        cardColor: Colors.grey[900],
+      ),
       initialRoute: '/',
       routes: {
         '/': (context) => const LoginScreen(),

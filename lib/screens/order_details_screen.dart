@@ -337,12 +337,14 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                       child: InkWell(
                         onTap: _isLoading
                             ? null
-                            : () async {
-                                final success = await _updateStatus('delivered');
-                                if (success && mounted) {
-                                  Navigator.pop(context);
-                                }
-                              },
+                            : () => _showConfirmationDialog(
+                                  context,
+                                  'Complete Order',
+                                  'Are you sure you want to mark this order as completed?',
+                                  'delivered',
+                                  const Color(0xFFEDFF00),
+                                  Colors.black,
+                                ),
                         child: Container(
                           height: 50,
                           alignment: Alignment.center,
@@ -377,7 +379,14 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                       child: InkWell(
                         onTap: _isLoading
                             ? null
-                            : () => _updateStatus('cancelled'),
+                            : () => _showConfirmationDialog(
+                                  context,
+                                  'Cancel Order',
+                                  'Are you sure you want to cancel this order?',
+                                  'cancelled',
+                                  Colors.red,
+                                  Colors.white,
+                                ),
                         child: Container(
                           height: 50,
                           alignment: Alignment.center,
@@ -402,6 +411,66 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             const SizedBox(height: 24),
           ],
         ),
+      ),
+    );
+  }
+
+
+
+  void _showConfirmationDialog(
+    BuildContext context,
+    String title,
+    String content,
+    String statusToUpdate,
+    Color confirmColor,
+    Color confirmTextColor,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontFamily: 'kobe11Bold',
+          ),
+        ),
+        content: Text(
+          content,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontFamily: 'kobe11',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'No',
+              style: TextStyle(
+                color: Colors.white54,
+                fontFamily: 'kobe11',
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context); // Close dialog
+              final success = await _updateStatus(statusToUpdate);
+              if (success && mounted) {
+                Navigator.pop(context); // Close screen
+              }
+            },
+            child: Text(
+              'Yes',
+              style: TextStyle(
+                color: confirmColor,
+                fontFamily: 'kobe11Bold',
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -452,7 +521,42 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                   onTap: () {
                     Navigator.pop(context);
                     if (_currentStatus != status) {
-                      _updateStatus(status);
+                      String title = 'Update Status';
+                      String content = 'Are you sure you want to update the status to $status?';
+                      Color confirmColor = Colors.white;
+                      Color confirmTextColor = Colors.black;
+
+                      switch (status) {
+                        case 'delivered':
+                          title = 'Complete Order';
+                          content = 'Are you sure you want to mark this order as completed?';
+                          confirmColor = const Color(0xFFEDFF00);
+                          break;
+                        case 'cancelled':
+                          title = 'Cancel Order';
+                          content = 'Are you sure you want to cancel this order?';
+                          confirmColor = Colors.red;
+                          confirmTextColor = Colors.white;
+                          break;
+                        case 'shipped':
+                          content = 'Are you sure you want to mark this order as shipped?';
+                          break;
+                        case 'processing':
+                          content = 'Are you sure you want to mark this order as processing?';
+                          break;
+                        case 'pending':
+                          content = 'Are you sure you want to mark this order as pending?';
+                          break;
+                      }
+
+                      _showConfirmationDialog(
+                        context,
+                        title,
+                        content,
+                        status,
+                        confirmColor,
+                        confirmTextColor,
+                      );
                     }
                   },
                 )),

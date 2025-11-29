@@ -15,6 +15,7 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   bool _isLoading = true;
   String? _selectedPaymentMethod; // 'cod', 'cop', 'meetup', 'gcash'
+  Set<int> _selectedIndices = {}; // Track which items are selected
 
   // Access cart items from singleton
   List<Map<String, dynamic>> get _cartItems => CartManager.instance.items;
@@ -34,14 +35,17 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   double get _totalPrice {
-    if (_cartItems.isEmpty) return 0.0;
+    if (_cartItems.isEmpty || _selectedIndices.isEmpty) return 0.0;
     double total = 0.0;
-    for (var item in _cartItems) {
-      // Use PriceFormatter logic to parse price string
-      String priceStr = item['price'].toString().replaceAll(RegExp(r'[₱, ]'), '');
-      double price = double.tryParse(priceStr) ?? 0.0;
-      int quantity = item['quantity'] ?? 1;
-      total += price * quantity;
+    for (int index in _selectedIndices) {
+      if (index < _cartItems.length) {
+        final item = _cartItems[index];
+        // Use PriceFormatter logic to parse price string
+        String priceStr = item['price'].toString().replaceAll(RegExp(r'[₱, ]'), '');
+        double price = double.tryParse(priceStr) ?? 0.0;
+        int quantity = item['quantity'] ?? 1;
+        total += price * quantity;
+      }
     }
     return total;
   }
@@ -322,6 +326,22 @@ class _CartScreenState extends State<CartScreen> {
                               ),
                               child: Row(
                                 children: [
+                                  // Checkbox for selection
+                                  Checkbox(
+                                    value: _selectedIndices.contains(index),
+                                    onChanged: (bool? value) {
+                                      setState(() {
+                                        if (value == true) {
+                                          _selectedIndices.add(index);
+                                        } else {
+                                          _selectedIndices.remove(index);
+                                        }
+                                      });
+                                    },
+                                    activeColor: const Color(0xFFEDFF00),
+                                    checkColor: Colors.black,
+                                  ),
+                                  const SizedBox(width: 8),
                                   // Product Image
                                   Container(
                                     width: 80,
@@ -618,6 +638,18 @@ class _CartScreenState extends State<CartScreen> {
                           onPressed: isEmpty
                               ? null
                               : () {
+                                  // Check if any items are selected
+                                  if (_selectedIndices.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Please select at least one item to checkout'),
+                                        backgroundColor: Colors.orange,
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  
                                   if (_selectedPaymentMethod == null) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
@@ -628,14 +660,29 @@ class _CartScreenState extends State<CartScreen> {
                                     );
                                     return;
                                   }
+
+                                  // Get only selected items
+                                  final selectedItems = _selectedIndices
+                                      .map((index) => _cartItems[index])
+                                      .toList();
+
+                                  // Navigate to checkout screen with selected items
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => CheckoutScreen(
-                                        preselectedPaymentMethod: _selectedPaymentMethod,
+                                      builder: (context) => CheckoutScreen(
+                                        preselectedPaymentMethod: _selectedPaymentMethod!,
+                                        selectedCartItems: selectedItems,
                                       ),
                                     ),
-                                  );
+                                  ).then((_) {
+                                    // Reload cart after checkout
+                                    _loadCart();
+                                    // Clear selections
+                                    setState(() {
+                                      _selectedIndices.clear();
+                                    });
+                                  });
                                 },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: isEmpty

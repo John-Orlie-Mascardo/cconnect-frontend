@@ -9,6 +9,7 @@ import '../services/cart_manager.dart';
 import 'products_management_screen.dart';
 import '../utils/price_formatter.dart';
 import '../services/user_service.dart';
+import 'owner_dashboard_screen.dart';
 
 class MeScreen extends StatefulWidget {
   const MeScreen({super.key});
@@ -21,12 +22,23 @@ class _MeScreenState extends State<MeScreen> {
   List<Map<String, dynamic>> _wishlistItems = [];
   bool _isLoadingWishlist = true;
   String _userName = 'BIG SHOE JOE'; // Default/Fallback name
+  String? _userRole;
 
   @override
   void initState() {
     super.initState();
     _loadWishlist();
     _loadUserProfile();
+    _loadUserRole();
+  }
+
+  Future<void> _loadUserRole() async {
+    final role = await AuthService.getRole();
+    if (mounted) {
+      setState(() {
+        _userRole = role;
+      });
+    }
   }
 
   Future<void> _loadUserProfile() async {
@@ -489,29 +501,36 @@ class _MeScreenState extends State<MeScreen> {
         selectedItemColor: Colors.white,
         unselectedItemColor: Colors.grey,
         onTap: (index) {
-          // Navigation Logic:
-          // Index 0: Go back to Home
-          // Index 1: Push to Cart
-          // Index 2: Stay on Profile (Current)
           if (index == 0) {
             Navigator.pop(context);
           } else if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const CartScreen()),
-            );
+            if (_userRole == 'admin') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardScreen()),
+              );
+            } else {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CartScreen()),
+              );
+            }
           }
         },
-        items: const [
-          BottomNavigationBarItem(
+        items: [
+          const BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart_outlined),
-            label: 'cart',
+            icon: Icon(
+              _userRole == 'admin'
+                  ? Icons.dashboard_outlined
+                  : Icons.shopping_cart_outlined,
+            ),
+            label: _userRole == 'admin' ? 'Dashboard' : 'Cart',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             label: 'Me',
           ),

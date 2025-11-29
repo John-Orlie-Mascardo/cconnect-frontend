@@ -6,6 +6,9 @@ import 'chats_screen.dart';
 import 'products_management_screen.dart';
 import 'manage_orders_screen.dart';
 import 'login_screen.dart';
+import '../services/notification_service.dart';
+import '../services/order_service.dart';
+import '../services/product_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -19,11 +22,62 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   /// Tracks user authentication status
   bool _isLoggedIn = false; // TODO: Replace with actual auth state management
+  bool _hasUnreadNotifications = false;
+  
+  // Dashboard counts
+  String _orderCount = '...';
+  String _productCount = '...';
+  String _userCount = '...';
 
   @override
   void initState() {
     super.initState();
     _checkAuthStatus(); // Check login status on init
+    _checkUnreadNotifications();
+    _loadDashboardData();
+  }
+
+  Future<void> _loadDashboardData() async {
+    try {
+      // Fetch orders
+      final orders = await OrderService.getAllOrders();
+      
+      // Fetch products
+      final products = await ProductService.getProducts();
+      
+      // Calculate unique users from orders (proxy for user count)
+      final uniqueUsers = orders.map((o) => o.customerName).toSet().length;
+
+      if (mounted) {
+        setState(() {
+          _orderCount = orders.length.toString();
+          _productCount = products.length.toString();
+          _userCount = uniqueUsers.toString();
+        });
+      }
+    } catch (e) {
+      print('Error loading dashboard data: $e');
+      if (mounted) {
+        setState(() {
+          _orderCount = '-';
+          _productCount = '-';
+          _userCount = '-';
+        });
+      }
+    }
+  }
+
+  Future<void> _checkUnreadNotifications() async {
+    try {
+      final notifications = await NotificationService.getNotifications();
+      if (mounted) {
+        setState(() {
+          _hasUnreadNotifications = notifications.any((n) => !n.read);
+        });
+      }
+    } catch (e) {
+      print('Error checking notifications: $e');
+    }
   }
 
   /// Check user authentication status
@@ -49,6 +103,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           // If login was successful, update state
           if (result == true) {
             setState(() => _isLoggedIn = true);
+            _loadDashboardData(); // Reload data on login
           }
         });
   }
@@ -153,15 +208,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             // Navigation Item: Notifications
             InkWell(
-              onTap: () {
+              onTap: () async {
                 Navigator.of(context).pop(); // Close drawer before navigating
-                Navigator.of(context).push(
+                await Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const NotificationScreen()),
                 );
+                // Refresh notification status after returning
+                _checkUnreadNotifications();
               },
-              child: const ListTile(
-                leading: Icon(Icons.notifications_none, color: Colors.white),
-                title: Text(
+              child: ListTile(
+                leading: Stack(
+                  children: [
+                    const Icon(Icons.notifications_none, color: Colors.white),
+                    if (_hasUnreadNotifications)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFEDFF00),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                title: const Text(
                   "Notifications",
                   style: TextStyle(fontFamily: 'kobe11', color: Colors.white),
                 ),
@@ -213,12 +287,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  // Hamburger Menu Button
-                  IconButton(
-                    icon: const Icon(Icons.menu, color: Colors.white, size: 28),
-                    onPressed: () {
-                      _scaffoldKey.currentState?.openDrawer();
-                    },
+                  // Hamburger Menu Button with notification badge
+                  Stack(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.menu, color: Colors.white, size: 28),
+                        onPressed: () {
+                          _scaffoldKey.currentState?.openDrawer();
+                        },
+                      ),
+                      if (_hasUnreadNotifications)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFEDFF00),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(width: 8),
 
@@ -264,12 +355,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         MaterialPageRoute(
                           builder: (_) => const ProductsManagementScreen(),
                         ),
-                      );
+                      ).then((_) => _loadDashboardData()); // Refresh on return
                     },
                     child: DashboardCard(
                       width: cardWidth,
                       title: 'Products',
-                      count: '6', // Dynamic count placeholder
+                      count: _productCount,
                       icon: Icons.bookmark_border,
                     ),
                   ),
@@ -279,7 +370,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: DashboardCard(
                       width: cardWidth,
                       title: 'Users',
-                      count: '8', // Dynamic count placeholder
+                      count: _userCount,
                       icon: Icons.person_outline,
                     ),
                   ),
@@ -291,12 +382,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         MaterialPageRoute(
                           builder: (_) => const ManageOrdersScreen(),
                         ),
-                      );
+                      ).then((_) => _loadDashboardData()); // Refresh on return
                     },
                     child: DashboardCard(
                       width: cardWidth,
                       title: 'Orders',
-                      count: '12', // Dynamic count placeholder
+                      count: _orderCount,
                       icon: Icons.inventory_2_outlined,
                     ),
                   ),

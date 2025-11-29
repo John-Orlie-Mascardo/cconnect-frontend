@@ -71,8 +71,12 @@ class Order {
     return Order(
       id: json['_id'] ?? '',
       userId: json['userId'] ?? '',
-      customerName: json['customerName'] ?? 'Unknown',
-      phoneNumber: json['phoneNumber'] ?? 'N/A',
+      customerName: json['customerName']?.toString() ??
+          (json['user'] is Map ? json['user']['name']?.toString() : null) ??
+          'Unknown',
+      phoneNumber: json['phoneNumber']?.toString() ??
+          (json['user'] is Map ? json['user']['phone']?.toString() : null) ??
+          'N/A',
       deliveryAddress: Address.fromJson(json['deliveryAddress'] ?? {}),
       deliveryMethod: json['deliveryMethod'] ?? '',
       paymentMethod: json['paymentMethod'] ?? '',
@@ -83,7 +87,7 @@ class Order {
       subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0.0,
       shippingFee: (json['shippingFee'] as num?)?.toDouble() ?? 0.0,
       total: (json['total'] as num?)?.toDouble() ?? (json['totalAmount'] as num?)?.toDouble() ?? 0.0,
-      status: json['status'] ?? 'Pending',
+      status: json['status'] ?? json['orderStatus'] ?? 'Pending',
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),

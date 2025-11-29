@@ -13,6 +13,7 @@ import '../models/product.dart';
 import '../services/product_service.dart';
 import '../services/product_service.dart';
 import '../services/auth_service.dart';
+import '../services/notification_service.dart';
 import '../utils/price_formatter.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -32,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Tracks user authentication status
   bool _isLoggedIn = false;
   String? _userRole;
+  bool _hasUnreadNotifications = false;
 
   // ─── PRODUCT DATA ─────────────────────────────────────────────
   List<Product> products = [];
@@ -84,6 +86,28 @@ class _HomeScreenState extends State<HomeScreen> {
     _startHeroTimer();
     _checkAuthStatus(); // Check login status immediately on load
     _loadProducts(); // Load products from API
+    _checkUnreadNotifications();
+  }
+
+  Future<void> _checkUnreadNotifications() async {
+    if (!_isLoggedIn) {
+      setState(() => _hasUnreadNotifications = false);
+      return;
+    }
+    
+    try {
+      final notifications = await NotificationService.getNotifications();
+      if (mounted) {
+        setState(() {
+          _hasUnreadNotifications = notifications.any((n) => !n.read);
+        });
+      }
+    } catch (e) {
+      print('Error checking notifications: $e');
+      if (mounted) {
+        setState(() => _hasUnreadNotifications = false);
+      }
+    }
   }
 
   /// Load products from the API
@@ -112,7 +136,16 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _isLoggedIn = user != null;
       _userRole = role; // sets user state to admin
+      // Reset notification badge when user changes
+      if (!_isLoggedIn) {
+        _hasUnreadNotifications = false;
+      }
     });
+    
+    // Check notifications only if logged in
+    if (_isLoggedIn) {
+      _checkUnreadNotifications();
+    }
   }
 
   /// Handle user login
@@ -157,7 +190,10 @@ class _HomeScreenState extends State<HomeScreen> {
               await FirebaseAuth.instance.signOut();
 
               // 2. Update UI state
-              setState(() => _isLoggedIn = false);
+              setState(() {
+                _isLoggedIn = false;
+                _hasUnreadNotifications = false; // Reset notification badge
+              });
 
               // 3. Option A: Navigate to Login Screen immediately
               if (mounted) {
@@ -235,17 +271,36 @@ class _HomeScreenState extends State<HomeScreen> {
             // Notifications & Messages (VISIBLE ONLY WHEN LOGGED IN)
             if (_isLoggedIn) ...[
               InkWell(
-                onTap: () {
+                onTap: () async {
                   Navigator.of(context).pop();
-                  Navigator.of(context).push(
+                  await Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const NotificationScreen(),
                     ),
                   );
+                  // Refresh notification status after returning
+                  _checkUnreadNotifications();
                 },
-                child: const ListTile(
-                  leading: Icon(Icons.notifications_none, color: Colors.white),
-                  title: Text(
+                child: ListTile(
+                  leading: Stack(
+                    children: [
+                      const Icon(Icons.notifications_none, color: Colors.white),
+                      if (_hasUnreadNotifications)
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFEDFF00),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  title: const Text(
                     "Notifications",
                     style: TextStyle(fontFamily: 'kobe11', color: Colors.white),
                   ),
@@ -350,13 +405,30 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: Row(
                   children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.menu,
-                        size: 28,
-                        color: Colors.white,
-                      ),
-                      onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                    Stack(
+                      children: [
+                        IconButton(
+                          icon: const Icon(
+                            Icons.menu,
+                            size: 28,
+                            color: Colors.white,
+                          ),
+                          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                        ),
+                        if (_hasUnreadNotifications && _isLoggedIn)
+                          Positioned(
+                            right: 8,
+                            top: 8,
+                            child: Container(
+                              width: 10,
+                              height: 10,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFEDFF00),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                     const Spacer(),
                     ClipRRect(

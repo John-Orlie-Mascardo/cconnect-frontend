@@ -67,7 +67,7 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
         await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            backgroundColor: const Color(0xFF1E1E1E),
+            backgroundColor: Colors.grey[900],
             title: const Text(
               'Remove product?',
               style: TextStyle(color: Colors.white),

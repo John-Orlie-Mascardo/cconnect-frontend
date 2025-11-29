@@ -50,6 +50,17 @@ class CartManager {
     }
   }
 
+  /// Remove item from cart by product ID (syncs with backend)
+  Future<void> removeItemByProductId(String productId) async {
+    final index = _items.indexWhere((item) => 
+      (item['productId'] ?? item['_id']).toString() == productId
+    );
+    
+    if (index != -1) {
+      await removeItem(index);
+    }
+  }
+
   /// Clear cart (syncs with backend)
   Future<void> clear() async {
     await CartService.clearCart();

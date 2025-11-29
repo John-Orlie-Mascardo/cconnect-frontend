@@ -42,10 +42,12 @@ import 'my_addresses_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final String? preselectedPaymentMethod;
+  final List<Map<String, dynamic>>? selectedCartItems;
   
   const CheckoutScreen({
     super.key,
     this.preselectedPaymentMethod,
+    this.selectedCartItems,
   });
 
   @override
@@ -60,8 +62,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   bool _isLoading = false;
   List<Address> _addresses = [];
 
-  // Get cart items from singleton
-  List<Map<String, dynamic>> get _cartItems => CartManager.instance.items;
+  // Get cart items from selectedCartItems parameter or singleton
+  List<Map<String, dynamic>> get _cartItems => 
+      widget.selectedCartItems ?? CartManager.instance.items;
 
   @override
   void initState() {
@@ -236,8 +239,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       setState(() => _isLoading = false);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        // Success - clear cart and show modal
-        await CartManager.instance.clear();
+        // Success - remove only the checked-out items from cart
+        if (widget.selectedCartItems != null) {
+          // Only selected items were checked out, remove them from backend cart
+          for (var item in widget.selectedCartItems!) {
+            final productId = item['productId'] ?? item['id'];
+            if (productId != null) {
+              try {
+                await CartManager.instance.removeItemByProductId(productId.toString());
+              } catch (e) {
+                print('Failed to remove item $productId from cart: $e');
+              }
+            }
+          }
+          // Reload cart to sync with backend
+          await CartManager.instance.loadCart();
+        } else {
+          // All items were checked out, clear entire cart
+          await CartManager.instance.clear();
+        }
         if (mounted) _showSuccessModal();
       } else {
         throw Exception('Order failed: ${response.statusCode}');
@@ -254,7 +274,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: Colors.black,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
