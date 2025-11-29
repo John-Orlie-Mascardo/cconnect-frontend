@@ -27,7 +27,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     _currentStatus = widget.order.status;
   }
 
-  Future<void> _updateStatus(String newStatus) async {
+  Future<bool> _updateStatus(String newStatus) async {
     setState(() => _isLoading = true);
     final success = await OrderService.updateOrderStatus(widget.order.id, newStatus);
     setState(() => _isLoading = false);
@@ -45,6 +45,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           ),
         );
       }
+      return true;
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -54,6 +55,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           ),
         );
       }
+      return false;
     }
   }
 
@@ -156,31 +158,38 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                         vertical: 8,
                       ),
                       color: Colors.grey[800],
-                      child: Row(
-                        children: [
-                          Text(
-                            _currentStatus,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontFamily: 'kobe11',
-                              fontSize: 16,
+                      child: GestureDetector(
+                        onTap: widget.isAdmin && !_isLoading
+                            ? () => _showStatusPicker(context)
+                            : null,
+                        child: Row(
+                          children: [
+                            Text(
+                              _currentStatus[0].toUpperCase() +
+                                  _currentStatus.substring(1),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontFamily: 'kobe11',
+                                fontSize: 16,
+                              ),
                             ),
-                          ),
-                          if (widget.isAdmin) ...[
-                            const SizedBox(width: 8),
-                            if (_isLoading)
-                              const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            else
-                              const Icon(Icons.edit, color: Colors.white, size: 16),
+                            if (widget.isAdmin) ...[
+                              const SizedBox(width: 8),
+                              if (_isLoading)
+                                const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              else
+                                const Icon(Icons.edit,
+                                    color: Colors.white, size: 16),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
                   ],
@@ -240,7 +249,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                                     Icons.image_not_supported,
                                     color: Colors.white24),
                               )
-                            : const Icon(Icons.shopping_bag, color: Colors.white24),
+                            : const Icon(Icons.shopping_bag,
+                                color: Colors.white24),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -288,8 +298,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            _buildSummaryRow('Subtotal:', PriceFormatter.format(widget.order.subtotal)),
-            _buildSummaryRow('Shipping cost:', PriceFormatter.format(widget.order.shippingFee)),
+            _buildSummaryRow(
+                'Subtotal:', PriceFormatter.format(widget.order.subtotal)),
+            _buildSummaryRow('Shipping cost:',
+                PriceFormatter.format(widget.order.shippingFee)),
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -313,64 +325,78 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               ],
             ),
 
-            const SizedBox(height: 48),
+            const SizedBox(height: 24),
 
             // Action Buttons (Only for Admin)
-            if (widget.isAdmin && _currentStatus != 'Delivered' && _currentStatus != 'Cancelled')
+            if (widget.isAdmin)
               Row(
                 children: [
-                  Expanded(
-                    child: InkWell(
-                      onTap: _isLoading ? null : () => _updateStatus('Delivered'),
-                      child: Container(
-                        height: 50,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEDFF00),
-                          borderRadius: BorderRadius.circular(4),
+                  if (_currentStatus != 'delivered' &&
+                      _currentStatus != 'cancelled')
+                    Expanded(
+                      child: InkWell(
+                        onTap: _isLoading
+                            ? null
+                            : () async {
+                                final success = await _updateStatus('delivered');
+                                if (success && mounted) {
+                                  Navigator.pop(context);
+                                }
+                              },
+                        child: Container(
+                          height: 50,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEDFF00),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.black,
+                                  ),
+                                )
+                              : const Text(
+                                  'Complete Order',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontFamily: 'kobe11Bold',
+                                    fontSize: 16,
+                                  ),
+                                ),
                         ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.black,
-                                ),
-                              )
-                            : const Text(
-                                'Complete Order',
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontFamily: 'kobe11Bold',
-                                  fontSize: 16,
-                                ),
-                              ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: InkWell(
-                      onTap: _isLoading ? null : () => _updateStatus('Cancelled'),
-                      child: Container(
-                        height: 50,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[800],
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          'Cancel Order',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontFamily: 'kobe11',
-                            fontSize: 16,
+                  if (_currentStatus != 'delivered' &&
+                      _currentStatus != 'cancelled') ...[
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: InkWell(
+                        onTap: _isLoading
+                            ? null
+                            : () => _updateStatus('cancelled'),
+                        child: Container(
+                          height: 50,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[800],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'Cancel Order',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontFamily: 'kobe11',
+                              fontSize: 16,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             const SizedBox(height: 24),
@@ -379,6 +405,63 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       ),
     );
   }
+
+  void _showStatusPicker(BuildContext context) {
+    final statuses = [
+      'pending',
+      'processing',
+      'shipped',
+      'delivered',
+      'cancelled'
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Update Status',
+              style: TextStyle(
+                color: Colors.white,
+                fontFamily: 'kobe11Bold',
+                fontSize: 20,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ...statuses.map((status) => ListTile(
+                  title: Text(
+                    status[0].toUpperCase() + status.substring(1),
+                    style: TextStyle(
+                      color: _currentStatus == status
+                          ? const Color(0xFFEDFF00)
+                          : Colors.white,
+                      fontFamily: 'kobe11',
+                      fontSize: 18,
+                    ),
+                  ),
+                  trailing: _currentStatus == status
+                      ? const Icon(Icons.check, color: Color(0xFFEDFF00))
+                      : null,
+                  onTap: () {
+                    Navigator.pop(context);
+                    if (_currentStatus != status) {
+                      _updateStatus(status);
+                    }
+                  },
+                )),
+          ],
+        ),
+      ),
+    );
+  }
+
 
   Widget _buildCustomerRow(String label, String value) {
     return Padding(

@@ -91,9 +91,13 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen> {
 
   Widget _buildOrderItem(BuildContext context, Order order) {
     // Determine display title (first item name or generic)
+    final productName = order.items.isNotEmpty ? order.items.first.name : '';
     final title = order.items.isNotEmpty
-        ? '${order.items.first.name}${order.items.length > 1 ? " +${order.items.length - 1} more" : ""}'
+        ? '${productName}${order.items.length > 1 ? " +${order.items.length - 1} more" : ""}'
         : 'Order #${order.id.substring(order.id.length - 5)}';
+    
+    // Debug logging
+    print('DEBUG [Manage Orders]: Product name = "$productName", Customer name = "${order.customerName}"');
 
     return GestureDetector(
       onTap: () async {
@@ -136,7 +140,7 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          title,
+                          title.isNotEmpty ? title : 'Unknown Product',
                           style: const TextStyle(
                             color: Colors.white,
                             fontFamily: 'kobe11Bold',
@@ -173,8 +177,17 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen> {
                       fontSize: 14,
                     ),
                   ),
+                  if (order.items.isNotEmpty)
+                    Text(
+                      'Unit Price: ${PriceFormatter.format(order.items.first.price)}',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontFamily: 'kobe11',
+                        fontSize: 14,
+                      ),
+                    ),
                   Text(
-                    'Name: ${order.customerName}',
+                    'Customer: ${order.customerName}',
                     style: const TextStyle(
                       color: Colors.white70,
                       fontFamily: 'kobe11',

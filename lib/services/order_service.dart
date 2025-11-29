@@ -4,9 +4,50 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/order.dart';
 import 'auth_service.dart';
 
+import 'product_service.dart';
+
 class OrderService {
   static Future<String?> _getToken() async {
     return await FirebaseAuth.instance.currentUser?.getIdToken();
+  }
+
+  /// Helper to enrich orders with missing product details
+  static Future<List<dynamic>> _enrichOrders(List<dynamic> ordersJson) async {
+    print('DEBUG: Enriching ${ordersJson.length} orders');
+    for (var order in ordersJson) {
+      if (order['items'] != null) {
+        for (var item in order['items']) {
+          // Check if name is missing, null, or empty (including whitespace)
+          final currentName = item['name']?.toString().trim() ?? '';
+          
+          if (currentName.isEmpty) {
+            final productId = item['productId'];
+            if (productId != null && productId.toString().isNotEmpty) {
+              print('DEBUG: Fetching product details for productId: $productId (current name: "${item['name']}")');
+              try {
+                final product = await ProductService.getProduct(productId.toString());
+                if (product != null) {
+                  print('DEBUG: Successfully fetched product: ${product.name}');
+                  item['name'] = product.name;
+                  // Optionally update image if missing
+                  if (item['image'] == null || item['image'].toString().isEmpty) {
+                    item['image'] = product.image;
+                  }
+                } else {
+                  print('WARNING: Product not found for productId: $productId');
+                }
+              } catch (e) {
+                print('ERROR: Failed to enrich order item for productId $productId: $e');
+              }
+            } else {
+              print('WARNING: Order item has empty name but no valid productId');
+            }
+          }
+        }
+      }
+    }
+    print('DEBUG: Enrichment complete');
+    return ordersJson;
   }
 
   /// Fetch all orders (Admin only)
@@ -26,9 +67,12 @@ class OrderService {
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         // Handle response format: { count: 0, orders: [] } or just []
-        final List<dynamic> ordersJson =
+        List<dynamic> ordersJson =
             data is Map ? (data['orders'] ?? []) : data;
         
+        // Enrich orders with missing details
+        ordersJson = await _enrichOrders(ordersJson);
+
         return ordersJson.map((json) => Order.fromJson(json)).toList();
       } else {
         throw Exception('Failed to load orders: ${res.statusCode}');
@@ -51,7 +95,7 @@ class OrderService {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({'status': status}),
+        body: jsonEncode({'orderStatus': status}),
       ).timeout(const Duration(seconds: 10));
 
       return res.statusCode == 200;
@@ -78,8 +122,11 @@ class OrderService {
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         // Handle response format: { count: 0, orders: [] } or just []
-        final List<dynamic> ordersJson =
+        List<dynamic> ordersJson =
             data is Map ? (data['orders'] ?? []) : data;
+            
+        // Enrich orders with missing details
+        ordersJson = await _enrichOrders(ordersJson);
         
         return ordersJson.map((json) => Order.fromJson(json)).toList();
       } else {

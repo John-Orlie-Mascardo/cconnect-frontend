@@ -4,7 +4,7 @@ import 'me_screen.dart';
 import 'notifications_screen.dart';
 import 'chats_screen.dart';
 import 'products_management_screen.dart';
-import 'orders_screen.dart';
+import 'manage_orders_screen.dart';
 import 'login_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -289,7 +289,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => const OrdersScreen(),
+                          builder: (_) => const ManageOrdersScreen(),
                         ),
                       );
                     },

@@ -177,19 +177,38 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             : _selectedPaymentMethod,
         'items': _cartItems
             .map(
-              (item) => {
-                'productId': item['productId'] ?? item['id'],
-                'name': item['title'] ?? item['name'],
-                'price':
-                    double.tryParse(
-                      item['price'].toString().replaceAll(
-                        RegExp(r'[^0-9.]'),
-                        '',
-                      ),
-                    ) ??
-                    0.0,
-                'quantity': item['quantity'] ?? 1,
-                'image': item['image'],
+              (item) {
+                // Extract and validate product name
+                final productName = (item['title'] ?? item['name'] ?? '').toString().trim();
+                final productId = item['productId'] ?? item['id'];
+                
+                // Detailed logging for each cart item
+                print('CART ITEM DEBUG: productId=$productId, title=${item['title']}, name=${item['name']}, keys=${item.keys.toList()}');
+                
+                // Log warning if name is empty
+                if (productName.isEmpty) {
+                  print('WARNING: Empty product name for productId: $productId');
+                }
+                
+                // Log warning if no productId
+                if (productId == null || productId.toString().isEmpty) {
+                  print('CRITICAL WARNING: Cart item has NO productId! Item: $item');
+                }
+                
+                return {
+                  'productId': productId,
+                  'name': productName.isNotEmpty ? productName : 'Unknown Product',
+                  'price':
+                      double.tryParse(
+                        item['price'].toString().replaceAll(
+                          RegExp(r'[^0-9.]'),
+                          '',
+                        ),
+                      ) ??
+                      0.0,
+                  'quantity': item['quantity'] ?? 1,
+                  'image': item['image'],
+                };
               },
             )
             .toList(),

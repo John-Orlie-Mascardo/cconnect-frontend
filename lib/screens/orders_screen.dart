@@ -107,9 +107,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   Widget _buildOrderItem(BuildContext context, Order order) {
     // Determine display title
+    final productName = order.items.isNotEmpty ? order.items.first.name : '';
     final title = order.items.isNotEmpty
-        ? '${order.items.first.name}${order.items.length > 1 ? " +${order.items.length - 1} more" : ""}'
+        ? '${productName}${order.items.length > 1 ? " +${order.items.length - 1} more" : ""}'
         : 'Order #${order.id.substring(order.id.length - 5)}';
+    
+    // Debug logging
+    print('DEBUG [Customer Orders]: Product name = "$productName", Customer = "${order.customerName}"');
 
     return GestureDetector(
       onTap: () {
@@ -163,7 +167,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              title,
+                              title.isNotEmpty ? title : 'Unknown Product',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontFamily: 'kobe11Bold',
@@ -199,6 +203,15 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           fontSize: 12,
                         ),
                       ),
+                      if (order.items.isNotEmpty)
+                        Text(
+                          'Unit Price: ${PriceFormatter.format(order.items.first.price)}',
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontFamily: 'kobe11',
+                            fontSize: 12,
+                          ),
+                        ),
                       const SizedBox(height: 4),
                       Text(
                         '${order.items.length} items • ${PriceFormatter.format(order.total)}',

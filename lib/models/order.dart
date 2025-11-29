@@ -82,7 +82,7 @@ class Order {
           [],
       subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0.0,
       shippingFee: (json['shippingFee'] as num?)?.toDouble() ?? 0.0,
-      total: (json['total'] as num?)?.toDouble() ?? 0.0,
+      total: (json['total'] as num?)?.toDouble() ?? (json['totalAmount'] as num?)?.toDouble() ?? 0.0,
       status: json['status'] ?? 'Pending',
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
