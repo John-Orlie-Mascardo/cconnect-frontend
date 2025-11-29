@@ -34,6 +34,26 @@ class ProductService {
     }
   }
 
+  // Get single product
+  static Future<Product?> getProduct(String id) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$kApiBaseUrl/products/$id'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return Product.fromJson(data['product']);
+      } else {
+        print('Failed to load product $id: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching product $id: $e');
+      return null;
+    }
+  }
+
   // Update product
   static Future<Product> updateProduct(String id, Map<String, dynamic> updates) async {
     try {

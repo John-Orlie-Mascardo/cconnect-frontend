@@ -326,18 +326,18 @@ class _CartScreenState extends State<CartScreen> {
                                   Container(
                                     width: 80,
                                     height: 80,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[800],
-                                      borderRadius: BorderRadius.circular(4),
-                                      image: item['image'] != null
-                                          ? DecorationImage(
-                                              image: NetworkImage(
-                                                _buildImageUrl(item['image']),
-                                              ),
-                                              fit: BoxFit.cover,
-                                            )
-                                          : null,
-                                    ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[800],
+                                        borderRadius: BorderRadius.circular(4),
+                                        image: (item['image'] != null && item['image'] is String)
+                                            ? DecorationImage(
+                                                image: NetworkImage(
+                                                  _buildImageUrl(item['image']),
+                                                ),
+                                                fit: BoxFit.cover,
+                                              )
+                                            : null,
+                                      ),
                                     child: item['image'] == null
                                         ? const Icon(
                                             Icons.image_not_supported,
@@ -354,7 +354,7 @@ class _CartScreenState extends State<CartScreen> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          item['title'],
+                                          item['title']?.toString() ?? 'Unknown Product',
                                           style: const TextStyle(
                                             fontFamily: 'kobe11Bold',
                                             color: Colors.white,

@@ -8,6 +8,7 @@ import '../services/wishlist_service.dart';
 import '../services/cart_manager.dart';
 import 'products_management_screen.dart';
 import '../utils/price_formatter.dart';
+import '../services/user_service.dart';
 
 class MeScreen extends StatefulWidget {
   const MeScreen({super.key});
@@ -19,11 +20,25 @@ class MeScreen extends StatefulWidget {
 class _MeScreenState extends State<MeScreen> {
   List<Map<String, dynamic>> _wishlistItems = [];
   bool _isLoadingWishlist = true;
+  String _userName = 'BIG SHOE JOE'; // Default/Fallback name
 
   @override
   void initState() {
     super.initState();
     _loadWishlist();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    final result = await UserService.getProfile();
+    if (mounted && result['success'] == true) {
+      final data = result['data'];
+      setState(() {
+        _userName = (data['name'] as String?)?.isNotEmpty == true 
+            ? data['name'] 
+            : 'BIG SHOE JOE';
+      });
+    }
   }
 
   Future<void> _loadWishlist() async {
@@ -229,9 +244,9 @@ class _MeScreenState extends State<MeScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'BIG SHOE JOE',
-                                    style: TextStyle(
+                                  Text(
+                                    _userName.toUpperCase(),
+                                    style: const TextStyle(
                                       color: Colors.white,
                                       fontFamily: 'kobe11',
                                       fontSize: 26,
@@ -386,9 +401,9 @@ class _MeScreenState extends State<MeScreen> {
                           horizontal: 16,
                           vertical: 14,
                         ),
-                        child: const Text(
-                          "BIG SHOE JOE'S WISHLIST",
-                          style: TextStyle(
+                        child: Text(
+                          "${_userName.toUpperCase()}'S WISHLIST",
+                          style: const TextStyle(
                             color: Colors.white,
                             fontFamily: 'kobe11',
                             fontSize: 18,
