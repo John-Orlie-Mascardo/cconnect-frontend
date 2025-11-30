@@ -43,7 +43,7 @@ import 'my_addresses_screen.dart';
 class CheckoutScreen extends StatefulWidget {
   final String? preselectedPaymentMethod;
   final List<Map<String, dynamic>>? selectedCartItems;
-  
+
   const CheckoutScreen({
     super.key,
     this.preselectedPaymentMethod,
@@ -63,7 +63,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   List<Address> _addresses = [];
 
   // Get cart items from selectedCartItems parameter or singleton
-  List<Map<String, dynamic>> get _cartItems => 
+  List<Map<String, dynamic>> get _cartItems =>
       widget.selectedCartItems ?? CartManager.instance.items;
 
   @override
@@ -178,43 +178,40 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'paymentMethod': _selectedPaymentMethod == 'cash'
             ? _selectedDeliveryMethod
             : _selectedPaymentMethod,
-        'items': _cartItems
-            .map(
-              (item) {
-                // Extract and validate product name
-                final productName = (item['title'] ?? item['name'] ?? '').toString().trim();
-                final productId = item['productId'] ?? item['id'];
-                
-                // Detailed logging for each cart item
-                print('CART ITEM DEBUG: productId=$productId, title=${item['title']}, name=${item['name']}, keys=${item.keys.toList()}');
-                
-                // Log warning if name is empty
-                if (productName.isEmpty) {
-                  print('WARNING: Empty product name for productId: $productId');
-                }
-                
-                // Log warning if no productId
-                if (productId == null || productId.toString().isEmpty) {
-                  print('CRITICAL WARNING: Cart item has NO productId! Item: $item');
-                }
-                
-                return {
-                  'productId': productId,
-                  'name': productName.isNotEmpty ? productName : 'Unknown Product',
-                  'price':
-                      double.tryParse(
-                        item['price'].toString().replaceAll(
-                          RegExp(r'[^0-9.]'),
-                          '',
-                        ),
-                      ) ??
-                      0.0,
-                  'quantity': item['quantity'] ?? 1,
-                  'image': item['image'],
-                };
-              },
-            )
-            .toList(),
+        'items': _cartItems.map((item) {
+          // Extract and validate product name
+          final productName = (item['title'] ?? item['name'] ?? '')
+              .toString()
+              .trim();
+          final productId = item['productId'] ?? item['id'];
+
+          // Detailed logging for each cart item
+          print(
+            'CART ITEM DEBUG: productId=$productId, title=${item['title']}, name=${item['name']}, keys=${item.keys.toList()}',
+          );
+
+          // Log warning if name is empty
+          if (productName.isEmpty) {
+            print('WARNING: Empty product name for productId: $productId');
+          }
+
+          // Log warning if no productId
+          if (productId == null || productId.toString().isEmpty) {
+            print('CRITICAL WARNING: Cart item has NO productId! Item: $item');
+          }
+
+          return {
+            'productId': productId,
+            'name': productName.isNotEmpty ? productName : 'Unknown Product',
+            'price':
+                double.tryParse(
+                  item['price'].toString().replaceAll(RegExp(r'[^0-9.]'), ''),
+                ) ??
+                0.0,
+            'quantity': item['quantity'] ?? 1,
+            'image': item['image'],
+          };
+        }).toList(),
         'subtotal': _subtotal,
         'shippingFee': _shippingFee,
         'total': _total,
@@ -246,7 +243,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             final productId = item['productId'] ?? item['id'];
             if (productId != null) {
               try {
-                await CartManager.instance.removeItemByProductId(productId.toString());
+                await CartManager.instance.removeItemByProductId(
+                  productId.toString(),
+                );
               } catch (e) {
                 print('Failed to remove item $productId from cart: $e');
               }
@@ -743,7 +742,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         width: double.infinity,
         height: 50,
         child: ElevatedButton(
-          onPressed: _isLoading ? null : _placeOrder,
+          onPressed: _isLoading ? null : _handlePlaceOrder,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFFEDFF00),
             shape: RoundedRectangleBorder(
@@ -763,5 +762,75 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
       ),
     );
+  }
+
+  void _handlePlaceOrder() {
+    if (_selectedPaymentMethod == 'E-Wallet') {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: const Text(
+            'Scan to Pay',
+            style: TextStyle(color: Colors.white, fontFamily: 'kobe11Bold'),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Please scan the QR code below to pay via GCash',
+                style: TextStyle(color: Colors.white70, fontFamily: 'kobe11'),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Image.asset(
+                  'assets/images/owner_qr.jpg',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(
+                      child: Icon(
+                        Icons.broken_image,
+                        color: Colors.grey,
+                        size: 50,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.white54, fontFamily: 'kobe11'),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _placeOrder();
+              },
+              child: const Text(
+                'Proceed',
+                style: TextStyle(
+                  color: Color(0xFFEDFF00),
+                  fontFamily: 'kobe11Bold',
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      _placeOrder();
+    }
   }
 }
