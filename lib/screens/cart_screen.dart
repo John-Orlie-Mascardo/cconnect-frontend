@@ -14,7 +14,7 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   bool _isLoading = true;
-  Set<int> _selectedIndices = {}; // Track which items are selected
+  final Set<int> _selectedIndices = {}; // Track which items are selected
 
   // Access cart items from singleton
   List<Map<String, dynamic>> get _cartItems => CartManager.instance.items;
@@ -40,7 +40,10 @@ class _CartScreenState extends State<CartScreen> {
       if (index < _cartItems.length) {
         final item = _cartItems[index];
         // Use PriceFormatter logic to parse price string
-        String priceStr = item['price'].toString().replaceAll(RegExp(r'[₱, ]'), '');
+        String priceStr = item['price'].toString().replaceAll(
+          RegExp(r'[₱, ]'),
+          '',
+        );
         double price = double.tryParse(priceStr) ?? 0.0;
         int quantity = item['quantity'] ?? 1;
         total += price * quantity;
@@ -62,8 +65,9 @@ class _CartScreenState extends State<CartScreen> {
   Future<void> _incrementQuantity(int index) async {
     final item = _cartItems[index];
     int currentQuantity = item['quantity'] ?? 1;
-    int stock = item['stock'] ?? 999; // TODO: Get actual stock from product data
-    
+    int stock =
+        item['stock'] ?? 999; // TODO: Get actual stock from product data
+
     // Check if we can increment (don't exceed stock)
     if (currentQuantity >= stock) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -88,7 +92,7 @@ class _CartScreenState extends State<CartScreen> {
 
   Future<void> _decrementQuantity(int index) async {
     int currentQuantity = _cartItems[index]['quantity'] ?? 1;
-    
+
     // If quantity is 1, show confirmation to remove
     if (currentQuantity <= 1) {
       showDialog(
@@ -97,27 +101,18 @@ class _CartScreenState extends State<CartScreen> {
           backgroundColor: Colors.grey[900],
           title: const Text(
             'Remove Item',
-            style: TextStyle(
-              color: Colors.white,
-              fontFamily: 'kobe11Bold',
-            ),
+            style: TextStyle(color: Colors.white, fontFamily: 'kobe11Bold'),
           ),
           content: const Text(
             'Remove this item from your cart?',
-            style: TextStyle(
-              color: Colors.white70,
-              fontFamily: 'kobe11',
-            ),
+            style: TextStyle(color: Colors.white70, fontFamily: 'kobe11'),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text(
                 'Cancel',
-                style: TextStyle(
-                  color: Colors.white54,
-                  fontFamily: 'kobe11',
-                ),
+                style: TextStyle(color: Colors.white54, fontFamily: 'kobe11'),
               ),
             ),
             TextButton(
@@ -128,10 +123,7 @@ class _CartScreenState extends State<CartScreen> {
               },
               child: const Text(
                 'Remove',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontFamily: 'kobe11Bold',
-                ),
+                style: TextStyle(color: Colors.red, fontFamily: 'kobe11Bold'),
               ),
             ),
           ],
@@ -150,7 +142,6 @@ class _CartScreenState extends State<CartScreen> {
       setState(() {});
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -172,7 +163,10 @@ class _CartScreenState extends State<CartScreen> {
                   // Header with back button
                   Container(
                     color: Colors.black,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     child: Row(
                       children: [
                         IconButton(
@@ -345,18 +339,20 @@ class _CartScreenState extends State<CartScreen> {
                                   Container(
                                     width: 80,
                                     height: 80,
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey[800],
-                                        borderRadius: BorderRadius.circular(4),
-                                        image: (item['image'] != null && item['image'] is String)
-                                            ? DecorationImage(
-                                                image: NetworkImage(
-                                                  _buildImageUrl(item['image']),
-                                                ),
-                                                fit: BoxFit.cover,
-                                              )
-                                            : null,
-                                      ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[800],
+                                      borderRadius: BorderRadius.circular(4),
+                                      image:
+                                          (item['image'] != null &&
+                                              item['image'] is String)
+                                          ? DecorationImage(
+                                              image: NetworkImage(
+                                                _buildImageUrl(item['image']),
+                                              ),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : null,
+                                    ),
                                     child: item['image'] == null
                                         ? const Icon(
                                             Icons.image_not_supported,
@@ -373,7 +369,8 @@ class _CartScreenState extends State<CartScreen> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          item['title']?.toString() ?? 'Unknown Product',
+                                          item['title']?.toString() ??
+                                              'Unknown Product',
                                           style: const TextStyle(
                                             fontFamily: 'kobe11Bold',
                                             color: Colors.white,
@@ -400,7 +397,8 @@ class _CartScreenState extends State<CartScreen> {
                                             Material(
                                               color: Colors.transparent,
                                               child: InkWell(
-                                                onTap: () => _decrementQuantity(index),
+                                                onTap: () =>
+                                                    _decrementQuantity(index),
                                                 borderRadius:
                                                     BorderRadius.circular(4),
                                                 child: Container(
@@ -443,7 +441,8 @@ class _CartScreenState extends State<CartScreen> {
                                             Material(
                                               color: Colors.transparent,
                                               child: InkWell(
-                                                onTap: () => _incrementQuantity(index),
+                                                onTap: () =>
+                                                    _incrementQuantity(index),
                                                 borderRadius:
                                                     BorderRadius.circular(4),
                                                 child: Container(
@@ -583,13 +582,11 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                         ],
                       ),
-                      
-                      if (!isEmpty) ...[
-                        const SizedBox(height: 24),
-                      ],
-                      
+
+                      if (!isEmpty) ...[const SizedBox(height: 24)],
+
                       const SizedBox(height: 24),
-                      
+
                       // Checkout Button
                       SizedBox(
                         width: double.infinity,
@@ -601,7 +598,9 @@ class _CartScreenState extends State<CartScreen> {
                                   if (_selectedIndices.isEmpty) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text('Please select at least one item to checkout'),
+                                        content: Text(
+                                          'Please select at least one item to checkout',
+                                        ),
                                         backgroundColor: Colors.orange,
                                         duration: Duration(seconds: 2),
                                       ),
@@ -662,7 +661,6 @@ class _CartScreenState extends State<CartScreen> {
       ),
     );
   }
-
 
   Widget _buildEmptyState() {
     return Center(

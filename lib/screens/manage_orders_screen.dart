@@ -93,11 +93,13 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen> {
     // Determine display title (first item name or generic)
     final productName = order.items.isNotEmpty ? order.items.first.name : '';
     final title = order.items.isNotEmpty
-        ? '${productName}${order.items.length > 1 ? " +${order.items.length - 1} more" : ""}'
+        ? '$productName${order.items.length > 1 ? " +${order.items.length - 1} more" : ""}'
         : 'Order #${order.id.substring(order.id.length - 5)}';
-    
+
     // Debug logging
-    print('DEBUG [Manage Orders]: Product name = "$productName", Customer name = "${order.customerName}"');
+    print(
+      'DEBUG [Manage Orders]: Product name = "$productName", Customer name = "${order.customerName}"',
+    );
 
     return GestureDetector(
       onTap: () async {
@@ -124,8 +126,10 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen> {
                   ? Image.network(
                       _buildImageUrl(order.items.first.image!),
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          const Icon(Icons.image_not_supported, color: Colors.white24),
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.image_not_supported,
+                        color: Colors.white24,
+                      ),
                     )
                   : const Icon(Icons.shopping_bag, color: Colors.white24),
             ),
@@ -196,7 +200,10 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen> {
                   ),
                   const SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: _getStatusColor(order.status),
                       borderRadius: BorderRadius.circular(4),

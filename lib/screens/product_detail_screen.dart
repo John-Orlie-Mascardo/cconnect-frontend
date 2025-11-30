@@ -15,10 +15,7 @@ import '../utils/price_formatter.dart';
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
 
-  const ProductDetailScreen({
-    super.key,
-    required this.product,
-  });
+  const ProductDetailScreen({super.key, required this.product});
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -56,7 +53,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void _calculateAvailableSizes() {
     // Read sizes array from product (new backend format)
     final productSizes = widget.product.sizes;
-    
+
     // If no sizes array is present, mark all as unavailable
     if (productSizes == null || productSizes.isEmpty) {
       _unavailableSizes = List.from(_sizes);
@@ -68,7 +65,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     setState(() {
       // Mark sizes as unavailable if they're not in the product's sizes array
-      _unavailableSizes = _sizes.where((s) => !availableSizes.contains(s)).toList();
+      _unavailableSizes = _sizes
+          .where((s) => !availableSizes.contains(s))
+          .toList();
     });
   }
 
@@ -141,20 +140,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
 
     // Check if adding all items would exceed cart limit
-    // Note: CartManager check is per item, so we do a pre-check here if possible, 
+    // Note: CartManager check is per item, so we do a pre-check here if possible,
     // or just try to add them one by one.
     // Since CartManager.addItem returns false if full, we can track successes.
 
     int addedCount = 0;
     List<int> failedSizes = [];
-    
+
     // Create a copy of selected sizes to avoid concurrent modification
     final sizesToAdd = List<int>.from(_selectedSizes);
 
     for (final size in sizesToAdd) {
       final success = await CartManager.instance.addItem({
         'title': widget.product.name,
-        'price': PriceFormatter.format(widget.product.price), // Format price as string
+        'price': PriceFormatter.format(
+          widget.product.price,
+        ), // Format price as string
         'image': widget.product.image,
         'size': size,
         'qty': 1,
@@ -179,26 +180,105 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
-    // Show success message
-    final sizeString = sizesToAdd.join(', ');
-    String message = 'Added ${widget.product.name} (Sizes: $sizeString) to cart!';
-    
-    if (failedSizes.isNotEmpty) {
-      message += ' (Failed to add sizes: ${failedSizes.join(', ')} due to cart limit)';
+    /// Show success modal when items added to cart
+    void _showAddToCartSuccess(List<int> addedSizes, List<int> failedSizes) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.check_circle,
+                color: Color(0xFFEDFF00),
+                size: 64,
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Added to Cart!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${widget.product.name}\nSizes: ${addedSizes.join(', ')}',
+                style: const TextStyle(color: Colors.white70, fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              if (failedSizes.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Note: Sizes ${failedSizes.join(', ')} not added (cart limit reached)',
+                  style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white70),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        'Continue Shopping',
+                        style: TextStyle(color: Colors.white70, fontSize: 14),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx); // Close dialog
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const CartScreen()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFEDFF00),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        'View Cart',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(color: Colors.black),
-        ),
-        backgroundColor: const Color(0xFFEDFF00),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-    
-    // Clear selection after successful add (optional, but good UX)
+    // Show success modal
+    _showAddToCartSuccess(sizesToAdd, failedSizes);
+
+    // Clear selection after successful add
     setState(() {
       _selectedSizes.clear();
     });
@@ -271,9 +351,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              newState
-                  ? 'Added to wishlist'
-                  : 'Removed from wishlist',
+              newState ? 'Added to wishlist' : 'Removed from wishlist',
             ),
             backgroundColor: const Color(0xFFEDFF00),
             duration: const Duration(seconds: 2),
@@ -347,20 +425,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             child: Text(
                               'video/pic showcasing\ngoods',
                               textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 16, color: Colors.white70),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white70,
+                              ),
                             ),
                           );
                         }
 
                         // Determine if it's a network image (http or relative path)
-                        final isNetwork = image.startsWith('http') || image.startsWith('/') || image.startsWith('uploads');
-                        
+                        final isNetwork =
+                            image.startsWith('http') ||
+                            image.startsWith('/') ||
+                            image.startsWith('uploads');
+
                         if (isNetwork) {
                           // Construct full URL if relative
-                          final imageUrl = image.startsWith('http') 
-                              ? image 
+                          final imageUrl = image.startsWith('http')
+                              ? image
                               : 'http://localhost:3000${image.startsWith('/') ? '' : '/'}$image';
-                              
+
                           return Image(
                             image: NetworkImage(imageUrl),
                             fit: BoxFit.cover,
@@ -368,16 +452,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               if (loadingProgress == null) return child;
                               return Center(
                                 child: CircularProgressIndicator(
-                                  value: loadingProgress.expectedTotalBytes != null
+                                  value:
+                                      loadingProgress.expectedTotalBytes != null
                                       ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
+                                            loadingProgress.expectedTotalBytes!
                                       : null,
                                   color: const Color(0xFFEDFF00),
                                 ),
                               );
                             },
                             errorBuilder: (_, __, ___) => const Center(
-                              child: Icon(Icons.broken_image, color: Colors.white54, size: 50),
+                              child: Icon(
+                                Icons.broken_image,
+                                color: Colors.white54,
+                                size: 50,
+                              ),
                             ),
                           );
                         } else {
@@ -389,7 +478,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               child: Text(
                                 'video/pic showcasing\ngoods',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 16, color: Colors.white70),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white70,
+                                ),
                               ),
                             ),
                           );
@@ -460,17 +552,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                         const SizedBox(height: 12),
 
-
                         // Size Selection Grid
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
                           children: _sizes.map((size) {
                             final isSelected = _selectedSizes.contains(size);
-                            final isAvailable = !_unavailableSizes.contains(size);
+                            final isAvailable = !_unavailableSizes.contains(
+                              size,
+                            );
 
                             return GestureDetector(
-                              onTap: isAvailable ? () => _selectSize(size) : null,
+                              onTap: isAvailable
+                                  ? () => _selectSize(size)
+                                  : null,
                               child: Container(
                                 width: 60,
                                 height: 40,
@@ -478,15 +573,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   color: isSelected
                                       ? const Color(0xFFEDFF00)
                                       : isAvailable
-                                          ? Colors.grey[800]
-                                          : Colors.grey[900], // Darker for unavailable
+                                      ? Colors.grey[800]
+                                      : Colors
+                                            .grey[900], // Darker for unavailable
                                   borderRadius: BorderRadius.circular(4),
                                   border: Border.all(
                                     color: isSelected
                                         ? const Color(0xFFEDFF00)
                                         : isAvailable
-                                            ? Colors.grey[700]!
-                                            : Colors.grey[850]!, // Dimmer border
+                                        ? Colors.grey[700]!
+                                        : Colors.grey[850]!, // Dimmer border
                                     width: isSelected ? 2 : 1,
                                   ),
                                 ),
@@ -502,11 +598,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                       color: isSelected
                                           ? Colors.black
                                           : isAvailable
-                                              ? Colors.white
-                                              : Colors.white24, // Dimmed text
+                                          ? Colors.white
+                                          : Colors.white24, // Dimmed text
                                       decoration: isAvailable
                                           ? null
-                                          : TextDecoration.lineThrough, // Optional: strike-through
+                                          : TextDecoration
+                                                .lineThrough, // Optional: strike-through
                                     ),
                                   ),
                                 ),
