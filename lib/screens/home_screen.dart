@@ -11,7 +11,6 @@ import 'login_screen.dart';
 import 'settings_screen.dart';
 import '../models/product.dart';
 import '../services/product_service.dart';
-import '../services/product_service.dart';
 import '../services/auth_service.dart';
 import '../services/notification_service.dart';
 import '../utils/price_formatter.dart';
@@ -94,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() => _hasUnreadNotifications = false);
       return;
     }
-    
+
     try {
       final notifications = await NotificationService.getNotifications();
       if (mounted) {
@@ -141,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _hasUnreadNotifications = false;
       }
     });
-    
+
     // Check notifications only if logged in
     if (_isLoggedIn) {
       _checkUnreadNotifications();
@@ -413,7 +412,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             size: 28,
                             color: Colors.white,
                           ),
-                          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                          onPressed: () =>
+                              _scaffoldKey.currentState?.openDrawer(),
                         ),
                         if (_hasUnreadNotifications && _isLoggedIn)
                           Positioned(

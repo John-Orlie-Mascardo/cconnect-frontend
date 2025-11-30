@@ -1,3 +1,4 @@
+import 'package:csoles_application/screens/manage_users_screen.dart';
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'me_screen.dart';
@@ -6,6 +7,7 @@ import 'chats_screen.dart';
 import 'products_management_screen.dart';
 import 'manage_orders_screen.dart';
 import 'login_screen.dart';
+import 'manage_orders_screen.dart';
 import '../services/notification_service.dart';
 import '../services/order_service.dart';
 import '../services/product_service.dart';
@@ -23,7 +25,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// Tracks user authentication status
   bool _isLoggedIn = false; // TODO: Replace with actual auth state management
   bool _hasUnreadNotifications = false;
-  
+
   // Dashboard counts
   String _orderCount = '...';
   String _productCount = '...';
@@ -41,10 +43,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       // Fetch orders
       final orders = await OrderService.getAllOrders();
-      
+
       // Fetch products
       final products = await ProductService.getProducts();
-      
+
       // Calculate unique users from orders (proxy for user count)
       final uniqueUsers = orders.map((o) => o.customerName).toSet().length;
 
@@ -80,15 +82,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  /// Check user authentication status
-  /// TODO: Replace with actual auth state check (e.g., from SharedPreferences, Provider, etc.)
   void _checkAuthStatus() {
-    // Example: Check if user token exists
-    // final prefs = await SharedPreferences.getInstance();
-    // setState(() {
-    //   _isLoggedIn = prefs.getString('user_token') != null;
-    // });
-
     setState(() {
       _isLoggedIn = false; // Default to logged out
     });
@@ -291,7 +285,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Stack(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.menu, color: Colors.white, size: 28),
+                        icon: const Icon(
+                          Icons.menu,
+                          color: Colors.white,
+                          size: 28,
+                        ),
                         onPressed: () {
                           _scaffoldKey.currentState?.openDrawer();
                         },
@@ -340,7 +338,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             const SizedBox(height: 16),
 
-            // ─── DASHBOARD METRICS GRID ──────────────────────────────────────
+            // ─── DASHBOARD GRID ──────────────────────────────────────
             // A responsive grid of cards displaying key statistics
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -351,11 +349,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   // Products Card: Links to Product Management
                   InkWell(
                     onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const ProductsManagementScreen(),
-                        ),
-                      ).then((_) => _loadDashboardData()); // Refresh on return
+                      Navigator.of(context)
+                          .push(
+                            MaterialPageRoute(
+                              builder: (_) => const ProductsManagementScreen(),
+                            ),
+                          )
+                          .then(
+                            (_) => _loadDashboardData(),
+                          ); // Refresh on return
                     },
                     child: DashboardCard(
                       width: cardWidth,
@@ -367,6 +369,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   // Users Card: Displays user count
                   InkWell(
+                    onTap: () {
+                      Navigator.of(context)
+                          .push(
+                            MaterialPageRoute(
+                              builder: (_) => const ManageUsersScreen(),
+                            ),
+                          )
+                          .then(
+                            (_) => _loadDashboardData(),
+                          ); // Refresh on return
+                    },
                     child: DashboardCard(
                       width: cardWidth,
                       title: 'Users',
@@ -378,11 +391,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   // Orders Card: Displays active order count
                   InkWell(
                     onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const ManageOrdersScreen(),
-                        ),
-                      ).then((_) => _loadDashboardData()); // Refresh on return
+                      Navigator.of(context)
+                          .push(
+                            MaterialPageRoute(
+                              builder: (_) => const ManageOrdersScreen(),
+                            ),
+                          )
+                          .then(
+                            (_) => _loadDashboardData(),
+                          ); // Refresh on return
                     },
                     child: DashboardCard(
                       width: cardWidth,

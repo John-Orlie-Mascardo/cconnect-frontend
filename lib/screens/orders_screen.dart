@@ -63,8 +63,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.shopping_bag_outlined,
-                      size: 64, color: Colors.white24),
+                  const Icon(
+                    Icons.shopping_bag_outlined,
+                    size: 64,
+                    color: Colors.white24,
+                  ),
                   const SizedBox(height: 16),
                   const Text(
                     'No orders yet',
@@ -109,11 +112,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
     // Determine display title
     final productName = order.items.isNotEmpty ? order.items.first.name : '';
     final title = order.items.isNotEmpty
-        ? '${productName}${order.items.length > 1 ? " +${order.items.length - 1} more" : ""}'
+        ? '$productName${order.items.length > 1 ? " +${order.items.length - 1} more" : ""}'
         : 'Order #${order.id.substring(order.id.length - 5)}';
-    
+
     // Debug logging
-    print('DEBUG [Customer Orders]: Product name = "$productName", Customer = "${order.customerName}"');
+    print(
+      'DEBUG [Customer Orders]: Product name = "$productName", Customer = "${order.customerName}"',
+    );
 
     return GestureDetector(
       onTap: () {
@@ -143,15 +148,17 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     color: Colors.grey[800],
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: order.items.isNotEmpty && order.items.first.image != null
+                  child:
+                      order.items.isNotEmpty && order.items.first.image != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(4),
                           child: Image.network(
                             _buildImageUrl(order.items.first.image!),
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => const Icon(
-                                Icons.image_not_supported,
-                                color: Colors.white24),
+                              Icons.image_not_supported,
+                              color: Colors.white24,
+                            ),
                           ),
                         )
                       : const Icon(Icons.shopping_bag, color: Colors.white24),
@@ -178,7 +185,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: _getStatusColor(order.status),
                               borderRadius: BorderRadius.circular(4),
