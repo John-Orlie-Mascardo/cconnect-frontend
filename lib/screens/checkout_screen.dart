@@ -622,6 +622,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildPaymentMethodSection() {
+    // Check if GCash should be disabled
+    final isGCashDisabled =
+        _selectedDeliveryMethod == 'CoD' || _selectedDeliveryMethod == 'CoP';
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -654,9 +658,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 'E-Wallet',
                 _selectedPaymentMethod,
                 isPayment: true,
+                isDisabled: isGCashDisabled,
               ),
             ],
           ),
+          if (isGCashDisabled)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                'GCash is unavailable for ${_selectedDeliveryMethod == 'CoD' ? 'Cash on Delivery' : 'Cash on Pickup'}',
+                style: const TextStyle(color: Colors.orange, fontSize: 12),
+              ),
+            ),
         ],
       ),
     );
@@ -667,31 +680,48 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     String value,
     String? selected, {
     bool isPayment = false,
+    bool isDisabled = false,
   }) {
     final isSelected = selected == value;
     return Expanded(
       child: InkWell(
-        onTap: () {
-          setState(() {
-            if (isPayment) {
-              _selectedPaymentMethod = value;
-            } else {
-              _selectedDeliveryMethod = value;
-            }
-          });
-        },
+        onTap: isDisabled
+            ? null
+            : () {
+                setState(() {
+                  if (isPayment) {
+                    _selectedPaymentMethod = value;
+                  } else {
+                    _selectedDeliveryMethod = value;
+                    // Reset payment method if switching to CoD/CoP and GCash was selected
+                    if ((value == 'CoD' || value == 'CoP') &&
+                        _selectedPaymentMethod == 'E-Wallet') {
+                      _selectedPaymentMethod = 'cash';
+                    }
+                  }
+                });
+              },
         borderRadius: BorderRadius.circular(8),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFEDFF00) : Colors.grey[800],
+            color: isDisabled
+                ? Colors.grey[850] // Darker for disabled
+                : isSelected
+                ? const Color(0xFFEDFF00)
+                : Colors.grey[800],
             borderRadius: BorderRadius.circular(8),
+            border: isDisabled ? Border.all(color: Colors.grey[800]!) : null,
           ),
           child: Center(
             child: Text(
               label,
               style: TextStyle(
-                color: isSelected ? Colors.black : Colors.white,
+                color: isDisabled
+                    ? Colors.grey[600] // Dimmed text for disabled
+                    : isSelected
+                    ? Colors.black
+                    : Colors.white,
                 fontSize: 14,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
