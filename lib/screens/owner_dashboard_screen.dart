@@ -7,10 +7,10 @@ import 'chats_screen.dart';
 import 'products_management_screen.dart';
 import 'manage_orders_screen.dart';
 import 'login_screen.dart';
-import 'manage_orders_screen.dart';
 import '../services/notification_service.dart';
 import '../services/order_service.dart';
 import '../services/product_service.dart';
+import '../services/user_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -47,14 +47,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       // Fetch products
       final products = await ProductService.getProducts();
 
-      // Calculate unique users from orders (proxy for user count)
-      final uniqueUsers = orders.map((o) => o.customerName).toSet().length;
+      // Fetch user count from backend
+      final userCount = await UserService.getUserCount();
 
       if (mounted) {
         setState(() {
           _orderCount = orders.length.toString();
           _productCount = products.length.toString();
-          _userCount = uniqueUsers.toString();
+          _userCount = userCount.toString();
         });
       }
     } catch (e) {

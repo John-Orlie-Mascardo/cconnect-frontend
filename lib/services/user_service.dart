@@ -16,7 +16,7 @@ class UserService {
       }
 
       final token = await user.getIdToken();
-      
+
       // Construct body with only non-null values
       final Map<String, dynamic> body = {};
       if (name != null) body['name'] = name;
@@ -26,20 +26,19 @@ class UserService {
         return {'success': true, 'message': 'No changes to update'};
       }
 
-      final res = await http.put(
-        Uri.parse('${AuthService.backendBase}/api/user/profile'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(body),
-      ).timeout(const Duration(seconds: 10));
+      final res = await http
+          .put(
+            Uri.parse('${AuthService.backendBase}/api/user/profile'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (res.statusCode == 200) {
-        return {
-          'success': true,
-          'body': jsonDecode(res.body),
-        };
+        return {'success': true, 'body': jsonDecode(res.body)};
       } else {
         return {
           'error': 'Failed to update profile: ${res.statusCode}',
@@ -60,20 +59,19 @@ class UserService {
       }
 
       final token = await user.getIdToken();
-      
-      final res = await http.get(
-        Uri.parse('${AuthService.backendBase}/api/user/profile'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 10));
+
+      final res = await http
+          .get(
+            Uri.parse('${AuthService.backendBase}/api/user/profile'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (res.statusCode == 200) {
-        return {
-          'success': true,
-          'data': jsonDecode(res.body),
-        };
+        return {'success': true, 'data': jsonDecode(res.body)};
       } else {
         return {
           'error': 'Failed to fetch profile: ${res.statusCode}',
@@ -82,6 +80,72 @@ class UserService {
       }
     } catch (e) {
       return {'error': e.toString()};
+    }
+  }
+
+  /// Fetch user count
+  static Future<int> getUserCount() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        return 0;
+      }
+
+      final token = await user.getIdToken();
+
+      final res = await http
+          .get(
+            Uri.parse('${AuthService.backendBase}/api/user/count'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        return data['count'] ?? 0;
+      } else {
+        print('Failed to fetch user count: ${res.statusCode}');
+        return 0;
+      }
+    } catch (e) {
+      print('Error fetching user count: $e');
+      return 0;
+    }
+  }
+
+  /// Fetch all users (Admin)
+  static Future<List<Map<String, dynamic>>> getAllUsers() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        return [];
+      }
+
+      final token = await user.getIdToken();
+
+      final res = await http
+          .get(
+            Uri.parse('${AuthService.backendBase}/api/user/all'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (res.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(res.body);
+        return data.cast<Map<String, dynamic>>();
+      } else {
+        print('Failed to fetch users: ${res.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      print('Error fetching users: $e');
+      return [];
     }
   }
 }

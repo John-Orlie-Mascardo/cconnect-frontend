@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'user_details_screen.dart';
+import '../services/user_service.dart';
 
 /// Manage Users Screen - Owner Dashboard
 ///
@@ -41,47 +42,12 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Replace with actual API call
-      // GET /api/admin/users
-      // final response = await http.get(
-      //   Uri.parse('http://localhost:3000/api/admin/users'),
-      //   headers: {'Authorization': 'Bearer $token'},
-      // );
-      // final users = jsonDecode(response.body);
-
-      // Mock data for now
-      await Future.delayed(const Duration(seconds: 1));
-      setState(() {
-        _users = [
-          {
-            'id': 'user_001',
-            'name': 'Joshua Santos',
-            'email': 'joshua@email.com',
-            'phoneNumber': '09171234567',
-            'joinDate': '2024-01-15',
-            'totalOrders': 12,
-            'status': 'active',
-          },
-          {
-            'id': 'user_002',
-            'name': 'Ken Reyes',
-            'email': 'ken@email.com',
-            'phoneNumber': '09187654321',
-            'joinDate': '2024-02-20',
-            'totalOrders': 3,
-            'status': 'active',
-          },
-          {
-            'id': 'user_003',
-            'name': 'Orlie Cruz',
-            'email': 'orlie@email.com',
-            'phoneNumber': '09191112222',
-            'joinDate': '2024-03-10',
-            'totalOrders': 0,
-            'status': 'banned',
-          },
-        ];
-      });
+      final users = await UserService.getAllUsers();
+      if (mounted) {
+        setState(() {
+          _users = users;
+        });
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -92,7 +58,9 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
         );
       }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
