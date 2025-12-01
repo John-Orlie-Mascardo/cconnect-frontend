@@ -140,8 +140,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   /// Place order - sends to backend
   Future<void> _placeOrder() async {
     // Validation
-    if (_selectedAddress == null || _selectedAddress!.province.isEmpty) {
+    if (_selectedAddress == null) {
       _showSnackBar('Please select a delivery address', isError: true);
+      return;
+    }
+
+    // Comprehensive address validation
+    final addr = _selectedAddress!;
+    if (addr.province.isEmpty ||
+        addr.city.isEmpty ||
+        addr.barangay.isEmpty ||
+        addr.postalCode.isEmpty ||
+        addr.streetDetails.isEmpty) {
+      _showSnackBar(
+        'Please select a complete delivery address (missing fields)',
+        isError: true,
+      );
       return;
     }
     if (_selectedDeliveryMethod == null) {
@@ -259,7 +273,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         }
         if (mounted) _showSuccessModal();
       } else {
-        throw Exception('Order failed: ${response.statusCode}');
+        // Try to parse error message from backend
+        String errorMessage = 'Order failed: ${response.statusCode}';
+        try {
+          final errorData = jsonDecode(response.body);
+          if (errorData['error'] != null) {
+            errorMessage = errorData['error'];
+          }
+        } catch (_) {
+          // Use default message if parsing fails
+        }
+        throw Exception(errorMessage);
       }
     } catch (e) {
       setState(() => _isLoading = false);
