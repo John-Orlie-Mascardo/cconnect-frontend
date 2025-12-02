@@ -55,8 +55,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     // Read sizes array from product (new backend format)
     final productSizes = widget.product.sizes;
 
-    // If no sizes array is present, mark all as unavailable
-    if (productSizes == null || productSizes.isEmpty) {
+    // If no sizes array is present or stock is 0, mark all as unavailable
+    if (productSizes == null ||
+        productSizes.isEmpty ||
+        widget.product.stock <= 0) {
       _unavailableSizes = List.from(_sizes);
       return;
     }
@@ -656,7 +658,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             // Add to Cart Button
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: _addToCart,
+                                onPressed: widget.product.stock <= 0
+                                    ? null
+                                    : _addToCart,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Color(0xFFEDFF00),
                                   foregroundColor: Colors.black,

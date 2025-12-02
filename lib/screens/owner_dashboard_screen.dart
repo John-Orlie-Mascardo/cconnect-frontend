@@ -47,14 +47,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
       // Fetch products
       final products = await ProductService.getProducts();
 
-      // Fetch user count from backend
-      final userCount = await UserService.getUserCount();
+      // Fetch all users to filter active ones
+      final users = await UserService.getAllUsers();
+      final activeUserCount = users
+          .where(
+            (u) => (u['status'] as String? ?? '').toLowerCase() == 'active',
+          )
+          .length;
 
       if (mounted) {
         setState(() {
           _orderCount = orders.length.toString();
           _productCount = products.length.toString();
-          _userCount = userCount.toString();
+          _userCount = activeUserCount.toString();
         });
       }
     } catch (e) {

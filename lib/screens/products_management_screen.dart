@@ -132,9 +132,7 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
     final conditionController = TextEditingController(
       text: product['condition'],
     );
-    final quantityController = TextEditingController(
-      text: product['quantity'].toString(),
-    );
+
     final stockController = TextEditingController(
       text: product['stock'].toString(),
     );
@@ -226,18 +224,7 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
                       ),
                     ),
                   ),
-                  TextField(
-                    controller: quantityController,
-                    style: const TextStyle(color: Colors.white),
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Quantity',
-                      labelStyle: TextStyle(color: Colors.white70),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white30),
-                      ),
-                    ),
-                  ),
+
                   TextField(
                     controller: stockController,
                     style: const TextStyle(color: Colors.white),
@@ -322,7 +309,7 @@ class _ProductsManagementScreen extends State<ProductsManagementScreen> {
                         'description': descriptionController.text,
                         'materials': materialsController.text,
                         'condition': conditionController.text,
-                        'quantity': int.tryParse(quantityController.text) ?? 0,
+
                         'stock': int.tryParse(stockController.text) ?? 0,
                         'sizes': selectedSizes.join(
                           ',',

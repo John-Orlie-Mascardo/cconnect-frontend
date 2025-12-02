@@ -79,8 +79,7 @@ class _CartScreenState extends State<CartScreen> {
   Future<void> _incrementQuantity(int index) async {
     final item = _cartItems[index];
     int currentQuantity = item['quantity'] ?? 1;
-    int stock =
-        item['stock'] ?? 999; // TODO: Get actual stock from product data
+    int stock = item['stock'] is int ? item['stock'] : 999;
 
     // Check if we can increment (don't exceed stock)
     if (currentQuantity >= stock) {
@@ -329,28 +328,42 @@ class _CartScreenState extends State<CartScreen> {
                           itemBuilder: (context, index) {
                             final item = _cartItems[index];
                             final int quantity = item['quantity'] ?? 1;
+                            final int stock = item['stock'] is int
+                                ? item['stock']
+                                : 999;
+                            final bool isOutOfStock = stock <= 0;
 
                             return Container(
                               margin: const EdgeInsets.only(bottom: 16),
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: Colors.grey[900],
+                                color: isOutOfStock
+                                    ? Colors.grey[850]
+                                    : Colors.grey[900],
                                 borderRadius: BorderRadius.circular(8),
+                                border: isOutOfStock
+                                    ? Border.all(
+                                        color: Colors.red.withOpacity(0.3),
+                                        width: 1,
+                                      )
+                                    : null,
                               ),
                               child: Row(
                                 children: [
-                                  // Checkbox for selection
+                                  // Checkbox for selection (disabled if out of stock)
                                   Checkbox(
                                     value: _selectedIndices.contains(index),
-                                    onChanged: (bool? value) {
-                                      setState(() {
-                                        if (value == true) {
-                                          _selectedIndices.add(index);
-                                        } else {
-                                          _selectedIndices.remove(index);
-                                        }
-                                      });
-                                    },
+                                    onChanged: isOutOfStock
+                                        ? null
+                                        : (bool? value) {
+                                            setState(() {
+                                              if (value == true) {
+                                                _selectedIndices.add(index);
+                                              } else {
+                                                _selectedIndices.remove(index);
+                                              }
+                                            });
+                                          },
                                     activeColor: const Color(0xFFEDFF00),
                                     checkColor: Colors.black,
                                   ),
@@ -409,13 +422,53 @@ class _CartScreenState extends State<CartScreen> {
                                           ),
                                         ),
                                         const SizedBox(height: 4),
-                                        Text(
-                                          'Stock: ${item['stock'] ?? 'N/A'}',
-                                          style: const TextStyle(
-                                            fontFamily: 'kobe11',
-                                            color: Colors.white54,
-                                            fontSize: 12,
-                                          ),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              'Stock: ${item['stock'] ?? 'N/A'}',
+                                              style: TextStyle(
+                                                fontFamily: 'kobe11',
+                                                color: isOutOfStock
+                                                    ? Colors.red
+                                                    : Colors.white54,
+                                                fontSize: 12,
+                                                fontWeight: isOutOfStock
+                                                    ? FontWeight.bold
+                                                    : FontWeight.normal,
+                                              ),
+                                            ),
+                                            if (isOutOfStock) ...[
+                                              const SizedBox(width: 8),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red.withOpacity(
+                                                    0.2,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                  border: Border.all(
+                                                    color: Colors.red
+                                                        .withOpacity(0.5),
+                                                    width: 1,
+                                                  ),
+                                                ),
+                                                child: const Text(
+                                                  'OUT OF STOCK',
+                                                  style: TextStyle(
+                                                    fontFamily: 'kobe11Bold',
+                                                    color: Colors.red,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
                                         ),
                                         const SizedBox(height: 12),
 
@@ -440,9 +493,11 @@ class _CartScreenState extends State<CartScreen> {
                                                           4,
                                                         ),
                                                   ),
-                                                  child: const Icon(
+                                                  child: Icon(
                                                     Icons.remove,
-                                                    color: Colors.white,
+                                                    color: isOutOfStock
+                                                        ? Colors.white24
+                                                        : Colors.white,
                                                     size: 18,
                                                   ),
                                                 ),
@@ -457,9 +512,11 @@ class _CartScreenState extends State<CartScreen> {
                                                   ),
                                               child: Text(
                                                 '$quantity',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontFamily: 'kobe11',
-                                                  color: Colors.white,
+                                                  color: isOutOfStock
+                                                      ? Colors.white24
+                                                      : Colors.white,
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.bold,
                                                 ),
@@ -484,9 +541,11 @@ class _CartScreenState extends State<CartScreen> {
                                                           4,
                                                         ),
                                                   ),
-                                                  child: const Icon(
+                                                  child: Icon(
                                                     Icons.add,
-                                                    color: Colors.white,
+                                                    color: isOutOfStock
+                                                        ? Colors.white24
+                                                        : Colors.white,
                                                     size: 18,
                                                   ),
                                                 ),
@@ -641,6 +700,29 @@ class _CartScreenState extends State<CartScreen> {
                                   final selectedItems = _selectedIndices
                                       .map((index) => _cartItems[index])
                                       .toList();
+
+                                  // Check if any selected items are out of stock
+                                  final outOfStockItems = selectedItems.where((
+                                    item,
+                                  ) {
+                                    final stock = item['stock'] is int
+                                        ? item['stock']
+                                        : 999;
+                                    return stock <= 0;
+                                  }).toList();
+
+                                  if (outOfStockItems.isNotEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Some selected items are out of stock. Please remove them before checkout.',
+                                        ),
+                                        backgroundColor: Colors.red,
+                                        duration: Duration(seconds: 3),
+                                      ),
+                                    );
+                                    return;
+                                  }
 
                                   // Navigate to checkout screen with selected items
                                   Navigator.push(

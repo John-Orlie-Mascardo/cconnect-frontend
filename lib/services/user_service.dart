@@ -148,4 +148,30 @@ class UserService {
       return [];
     }
   }
+
+  /// Update user status (Admin)
+  static Future<bool> updateUserStatus(String userId, String status) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return false;
+
+      final token = await user.getIdToken();
+
+      final res = await http
+          .put(
+            Uri.parse('${AuthService.backendBase}/api/user/$userId/status'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({'status': status}),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      return res.statusCode == 200;
+    } catch (e) {
+      print('Error updating user status: $e');
+      return false;
+    }
+  }
 }

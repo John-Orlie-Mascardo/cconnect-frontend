@@ -5,6 +5,7 @@ import 'cart_screen.dart';
 import 'me_screen.dart';
 import 'notifications_screen.dart';
 import 'chats_screen.dart';
+import 'customer_conversations_screen.dart';
 import 'product_detail_screen.dart';
 import 'owner_dashboard_screen.dart';
 import 'login_screen.dart';
@@ -318,7 +319,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () {
                   Navigator.of(context).pop();
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const ChatsScreen()),
+                    MaterialPageRoute(
+                      builder: (_) => const CustomerConversationsScreen(),
+                    ),
                   );
                 },
                 child: const ListTile(
@@ -566,8 +569,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 }
 
                                 return ProductCard(
-                                  title: product.name,
-                                  price: PriceFormatter.format(product.price),
+                                  product: product,
                                   imageUrl: imageUrl,
                                   onTap: () =>
                                       _navigateToProductDetail(product),
@@ -620,21 +622,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
 // ─── PRODUCT CARD WIDGET ─────────────────────────────────────
 class ProductCard extends StatelessWidget {
-  final String title;
-  final String price;
+  final Product product;
   final String? imageUrl;
   final VoidCallback? onTap;
 
   const ProductCard({
     super.key,
-    required this.title,
-    required this.price,
+    required this.product,
     this.imageUrl,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Available sizes to display
+    final allSizes = [4, 5, 6, 7, 8, 9, 10, 11, 12];
+    // Check if product has sizes and stock
+    final productSizes = product.sizes ?? [];
+    final isOutOfStock = product.stock <= 0;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),
@@ -698,22 +704,58 @@ class ProductCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            title,
+            product.name,
             style: const TextStyle(
               fontFamily: 'kobe11Bold',
               fontWeight: FontWeight.bold,
               fontSize: 16,
               color: Colors.white,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           Text(
-            price,
+            PriceFormatter.format(product.price),
             style: const TextStyle(
               fontSize: 14,
               color: Colors.white70,
               fontFamily: 'kobe11',
             ),
           ),
+          const SizedBox(height: 4),
+          // Sizes Display
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: allSizes.map((size) {
+              // Determine availability:
+              // 1. If stock is 0, ALL sizes are unavailable
+              // 2. If stock > 0, only sizes NOT in product.sizes are unavailable
+              final isAvailable = !isOutOfStock && productSizes.contains(size);
+
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                decoration: BoxDecoration(
+                  color: isAvailable ? Colors.grey[800] : Colors.grey[900],
+                  borderRadius: BorderRadius.circular(2),
+                  border: Border.all(
+                    color: isAvailable ? Colors.grey[600]! : Colors.white10,
+                    width: 0.5,
+                  ),
+                ),
+                child: Text(
+                  size.toString(),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontFamily: 'kobe11',
+                    color: isAvailable ? Colors.white70 : Colors.white24,
+                    decoration: isAvailable ? null : TextDecoration.lineThrough,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 4),
         ],
       ),
     );

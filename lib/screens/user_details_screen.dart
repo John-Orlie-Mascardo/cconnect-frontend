@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/user_service.dart';
 
 /// User Details Screen - Owner Dashboard
 ///
@@ -35,19 +36,14 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Replace with actual API call
-      // PUT /api/admin/users/:userId/status
-      // final response = await http.put(
-      //   Uri.parse('http://localhost:3000/api/admin/users/${widget.user['id']}/status'),
-      //   headers: {
-      //     'Authorization': 'Bearer $token',
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: jsonEncode({'status': newStatus}),
-      // );
+      final success = await UserService.updateUserStatus(
+        widget.user['id'] ?? widget.user['_id'],
+        newStatus,
+      );
 
-      // Mock successful update
-      await Future.delayed(const Duration(seconds: 1));
+      if (!success) {
+        throw Exception('Failed to update status');
+      }
 
       setState(() {
         _currentStatus = newStatus;
