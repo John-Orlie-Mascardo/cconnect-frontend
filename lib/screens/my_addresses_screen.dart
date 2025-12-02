@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/address.dart';
 import '../../services/address_service.dart';
 import 'address_form_sheet.dart';
+import 'widgets/error_view.dart';
 
 /// Screen for managing user delivery addresses
 ///
@@ -43,7 +44,8 @@ class MyAddressesScreen extends StatefulWidget {
 class _MyAddressesScreenState extends State<MyAddressesScreen> {
   // State variables
   List<Address> _addresses = [];
-  bool _isLoading = false;
+  bool _isLoading = true;
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -59,7 +61,9 @@ class _MyAddressesScreenState extends State<MyAddressesScreen> {
         _addresses = addresses;
       });
     } catch (e) {
-      _showSnackBar('Failed to load addresses', isError: true);
+      setState(() {
+        _hasError = true;
+      });
     } finally {
       setState(() => _isLoading = false);
     }
@@ -83,7 +87,7 @@ class _MyAddressesScreenState extends State<MyAddressesScreen> {
         throw Exception('Failed to add address');
       }
     } catch (e) {
-      _showSnackBar('Failed to add address', isError: true);
+      _handleError(e, 'Failed to add address');
     } finally {
       setState(() => _isLoading = false);
     }
@@ -97,7 +101,10 @@ class _MyAddressesScreenState extends State<MyAddressesScreen> {
 
     setState(() => _isLoading = true);
     try {
-      final success = await AddressService.updateAddress(updatedAddress.id!, updatedAddress);
+      final success = await AddressService.updateAddress(
+        updatedAddress.id!,
+        updatedAddress,
+      );
       if (success) {
         setState(() {
           _addresses[index] = updatedAddress;
@@ -107,7 +114,7 @@ class _MyAddressesScreenState extends State<MyAddressesScreen> {
         throw Exception('Failed to update address');
       }
     } catch (e) {
-      _showSnackBar('Failed to update address', isError: true);
+      _handleError(e, 'Failed to update address');
     } finally {
       setState(() => _isLoading = false);
     }
@@ -163,10 +170,22 @@ class _MyAddressesScreenState extends State<MyAddressesScreen> {
         throw Exception('Failed to delete address');
       }
     } catch (e) {
-      _showSnackBar('Failed to delete address', isError: true);
+      _handleError(e, 'Failed to delete address');
     } finally {
       setState(() => _isLoading = false);
     }
+  }
+
+  void _handleError(dynamic e, String defaultMessage) {
+    String message = defaultMessage;
+    final errorString = e.toString();
+    if (errorString.contains('SocketException') ||
+        errorString.contains('Network is unreachable') ||
+        errorString.contains('Connection refused') ||
+        errorString.contains('TimeoutException')) {
+      message = 'No internet connection';
+    }
+    _showSnackBar(message, isError: true);
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
@@ -249,6 +268,14 @@ class _MyAddressesScreenState extends State<MyAddressesScreen> {
                   ? const Center(
                       child: CircularProgressIndicator(
                         color: Color(0xFFEDFF00),
+                      ),
+                    )
+                  : _hasError
+                  ? Center(
+                      child: ErrorView(
+                        onRetry: _loadAddresses,
+                        message:
+                            'Failed to load addresses.\nPlease check your connection.',
                       ),
                     )
                   : _addresses.isEmpty

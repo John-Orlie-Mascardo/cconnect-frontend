@@ -17,22 +17,24 @@ class WishlistService {
       final token = await _getToken();
       if (token == null) return [];
 
-      final res = await http.get(
-        Uri.parse('${AuthService.backendBase}/api/wishlist'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 10));
+      final res = await http
+          .get(
+            Uri.parse('${AuthService.backendBase}/api/wishlist'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         final List<dynamic> items = data['items'] ?? [];
-        
+
         // Normalize items to ensure correct ID and details
         return items.map((item) {
           final map = Map<String, dynamic>.from(item);
-          
+
           // 1. Check for nested 'product' object
           if (map['product'] is Map) {
             final product = map['product'];
@@ -41,7 +43,7 @@ class WishlistService {
             map['price'] = product['price'] ?? map['price'];
             map['description'] = product['description'] ?? map['description'];
             map['productId'] = product['_id']; // Use MongoDB _id
-          } 
+          }
           // 2. Check for populated 'productId' object
           else if (map['productId'] is Map) {
             final product = map['productId'];
@@ -53,15 +55,15 @@ class WishlistService {
           }
           // 3. Handle flat structure (Found in logs)
           else {
-             // Map 'name' to 'title' if needed
-             if (map['title'] == null && map['name'] != null) {
-               map['title'] = map['name'];
-             }
-             // CRITICAL: Use top-level '_id' as 'productId' if available
-             // The logs showed the real MongoDB ID is in '_id', while 'productId' contained a legacy ID (e.g. "4412")
-             if (map['_id'] != null) {
-               map['productId'] = map['_id'];
-             }
+            // Map 'name' to 'title' if needed
+            if (map['title'] == null && map['name'] != null) {
+              map['title'] = map['name'];
+            }
+            // CRITICAL: Use top-level '_id' as 'productId' if available
+            // The logs showed the real MongoDB ID is in '_id', while 'productId' contained a legacy ID (e.g. "4412")
+            if (map['_id'] != null) {
+              map['productId'] = map['_id'];
+            }
           }
 
           // Ensure productId is a string
@@ -75,7 +77,7 @@ class WishlistService {
       return [];
     } catch (e) {
       print('Error fetching wishlist: $e');
-      return [];
+      rethrow;
     }
   }
 
@@ -95,14 +97,16 @@ class WishlistService {
         if (productData != null) ...productData,
       };
 
-      final res = await http.post(
-        Uri.parse('${AuthService.backendBase}/api/wishlist/add'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(body),
-      ).timeout(const Duration(seconds: 10));
+      final res = await http
+          .post(
+            Uri.parse('${AuthService.backendBase}/api/wishlist/add'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 10));
 
       return res.statusCode == 200 || res.statusCode == 201;
     } catch (e) {
@@ -118,13 +122,17 @@ class WishlistService {
       final token = await _getToken();
       if (token == null) return false;
 
-      final res = await http.delete(
-        Uri.parse('${AuthService.backendBase}/api/wishlist/remove/$productId'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 10));
+      final res = await http
+          .delete(
+            Uri.parse(
+              '${AuthService.backendBase}/api/wishlist/remove/$productId',
+            ),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
 
       return res.statusCode == 200 || res.statusCode == 204;
     } catch (e) {
@@ -151,13 +159,15 @@ class WishlistService {
       final token = await _getToken();
       if (token == null) return false;
 
-      final res = await http.delete(
-        Uri.parse('${AuthService.backendBase}/api/wishlist'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 10));
+      final res = await http
+          .delete(
+            Uri.parse('${AuthService.backendBase}/api/wishlist'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
 
       return res.statusCode == 200 || res.statusCode == 204;
     } catch (e) {

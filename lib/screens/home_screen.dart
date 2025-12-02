@@ -14,6 +14,7 @@ import '../services/product_service.dart';
 import '../services/auth_service.dart';
 import '../services/notification_service.dart';
 import '../utils/price_formatter.dart';
+import 'widgets/error_view.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -37,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // ─── PRODUCT DATA ─────────────────────────────────────────────
   List<Product> products = [];
   bool _isLoadingProducts = true;
+  bool _hasError = false;
 
   final List<String> _heroImages = [
     'assets/images/feature_test.jpg',
@@ -112,7 +114,10 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Load products from the API
   Future<void> _loadProducts() async {
     try {
-      setState(() => _isLoadingProducts = true);
+      setState(() {
+        _isLoadingProducts = true;
+        _hasError = false;
+      });
       final fetchedProducts = await ProductService.getProducts();
       if (mounted) {
         setState(() {
@@ -123,7 +128,10 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       print('Error loading products: $e');
       if (mounted) {
-        setState(() => _isLoadingProducts = false);
+        setState(() {
+          _isLoadingProducts = false;
+          _hasError = true;
+        });
       }
     }
   }
@@ -512,6 +520,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                   color: Color(0xFFEDFF00),
                                 ),
                               ),
+                            )
+                          : _hasError
+                          ? ErrorView(
+                              onRetry: _loadProducts,
+                              message:
+                                  'Failed to load products.\nPlease check your connection.',
                             )
                           : products.isEmpty
                           ? Center(

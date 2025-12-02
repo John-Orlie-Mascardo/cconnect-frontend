@@ -10,6 +10,7 @@ import 'products_management_screen.dart';
 import '../utils/price_formatter.dart';
 import '../services/user_service.dart';
 import 'owner_dashboard_screen.dart';
+import 'widgets/error_view.dart';
 
 class MeScreen extends StatefulWidget {
   const MeScreen({super.key});
@@ -21,6 +22,7 @@ class MeScreen extends StatefulWidget {
 class _MeScreenState extends State<MeScreen> {
   List<Map<String, dynamic>> _wishlistItems = [];
   bool _isLoadingWishlist = true;
+  bool _hasWishlistError = false;
   String _userName = 'BIG SHOE JOE'; // Default/Fallback name
   String? _userRole;
 
@@ -46,21 +48,33 @@ class _MeScreenState extends State<MeScreen> {
     if (mounted && result['success'] == true) {
       final data = result['data'];
       setState(() {
-        _userName = (data['name'] as String?)?.isNotEmpty == true 
-            ? data['name'] 
+        _userName = (data['name'] as String?)?.isNotEmpty == true
+            ? data['name']
             : 'BIG SHOE JOE';
       });
     }
   }
 
   Future<void> _loadWishlist() async {
-    setState(() => _isLoadingWishlist = true);
-    final items = await WishlistService.getWishlist();
-    if (mounted) {
+    try {
       setState(() {
-        _wishlistItems = items;
-        _isLoadingWishlist = false;
+        _isLoadingWishlist = true;
+        _hasWishlistError = false;
       });
+      final items = await WishlistService.getWishlist();
+      if (mounted) {
+        setState(() {
+          _wishlistItems = items;
+          _isLoadingWishlist = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingWishlist = false;
+          _hasWishlistError = true;
+        });
+      }
     }
   }
 
@@ -190,23 +204,30 @@ class _MeScreenState extends State<MeScreen> {
               future: AuthService.getRole(),
               builder: (context, roleSnapshot) {
                 final role = roleSnapshot.data;
-                
+
                 return SingleChildScrollView(
                   child: Column(
                     children: [
                       // ─── TOP BAR NAVIGATION & BRANDING ────────────────────────────────
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
                         child: Row(
                           children: [
                             InkWell(
-                              onTap: () =>
-                                  Navigator.pushReplacementNamed(context, '/home'),
+                              onTap: () => Navigator.pushReplacementNamed(
+                                context,
+                                '/home',
+                              ),
                               borderRadius: BorderRadius.circular(40),
                               child: Container(
                                 width: 48,
                                 height: 48,
-                                decoration: BoxDecoration(shape: BoxShape.circle),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                ),
                                 child: const Icon(
                                   Icons.arrow_back,
                                   color: Colors.white,
@@ -269,7 +290,10 @@ class _MeScreenState extends State<MeScreen> {
                                   if (role == 'admin')
                                     Container(
                                       margin: const EdgeInsets.only(top: 8),
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFEDFF00),
                                         borderRadius: BorderRadius.circular(4),
@@ -294,7 +318,7 @@ class _MeScreenState extends State<MeScreen> {
 
                       // Visual Divider
                       Container(height: 1, color: Colors.white24),
-                      
+
                       // ─── ADMIN SECTION ────────────────────────────────────────
                       if (role == 'admin')
                         GestureDetector(
@@ -302,7 +326,8 @@ class _MeScreenState extends State<MeScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const ProductsManagementScreen(),
+                                builder: (_) =>
+                                    const ProductsManagementScreen(),
                               ),
                             );
                           },
@@ -314,7 +339,10 @@ class _MeScreenState extends State<MeScreen> {
                             ),
                             child: Row(
                               children: const [
-                                Icon(Icons.admin_panel_settings, color: Color(0xFFEDFF00)),
+                                Icon(
+                                  Icons.admin_panel_settings,
+                                  color: Color(0xFFEDFF00),
+                                ),
                                 SizedBox(width: 16),
                                 Text(
                                   'Manage Products',
@@ -326,12 +354,16 @@ class _MeScreenState extends State<MeScreen> {
                                   ),
                                 ),
                                 Spacer(),
-                                Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
+                                Icon(
+                                  Icons.arrow_forward_ios,
+                                  color: Colors.white70,
+                                  size: 16,
+                                ),
                               ],
                             ),
                           ),
                         ),
-                        
+
                       if (role == 'admin')
                         Container(height: 1, color: Colors.white24),
 
@@ -434,57 +466,66 @@ class _MeScreenState extends State<MeScreen> {
                                 ),
                               ),
                             )
+                          : _hasWishlistError
+                          ? Padding(
+                              padding: const EdgeInsets.all(32.0),
+                              child: ErrorView(
+                                onRetry: _loadWishlist,
+                                message:
+                                    'Failed to load wishlist.\nPlease check your connection.',
+                              ),
+                            )
                           : _wishlistItems.isEmpty
-                              ? Padding(
-                                  padding: const EdgeInsets.all(32.0),
-                                  child: Center(
-                                    child: Column(
-                                      children: const [
-                                        Icon(
-                                          Icons.favorite_border,
-                                          size: 64,
-                                          color: Colors.white24,
-                                        ),
-                                        SizedBox(height: 16),
-                                        Text(
-                                          'Your wishlist is empty',
-                                          style: TextStyle(
-                                            color: Colors.white54,
-                                            fontFamily: 'kobe11',
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                      ],
+                          ? Padding(
+                              padding: const EdgeInsets.all(32.0),
+                              child: Center(
+                                child: Column(
+                                  children: const [
+                                    Icon(
+                                      Icons.favorite_border,
+                                      size: 64,
+                                      color: Colors.white24,
                                     ),
-                                  ),
-                                )
-                              : ListView.separated(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 16,
-                                  ),
-                                  itemCount: _wishlistItems.length,
-                                  separatorBuilder: (context, index) =>
-                                      const SizedBox(height: 16),
-                                  itemBuilder: (context, index) {
-                                    final item = _wishlistItems[index];
-                                    return WishlistItem(
-                                      title: item['title'] ?? 'Product',
-                                      description: item['description'] ??
-                                          'No description available',
-                                      price: PriceFormatter.format(
-                                        item['price'] ?? 0,
+                                    SizedBox(height: 16),
+                                    Text(
+                                      'Your wishlist is empty',
+                                      style: TextStyle(
+                                        color: Colors.white54,
+                                        fontFamily: 'kobe11',
+                                        fontSize: 16,
                                       ),
-                                      imageUrl: item['image'],
-                                      onAddToCart: () => _addToCart(item),
-                                      onRemove: () => _removeFromWishlist(
-                                        item['productId'],
-                                      ),
-                                    );
-                                  },
+                                    ),
+                                  ],
                                 ),
+                              ),
+                            )
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                              itemCount: _wishlistItems.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(height: 16),
+                              itemBuilder: (context, index) {
+                                final item = _wishlistItems[index];
+                                return WishlistItem(
+                                  title: item['title'] ?? 'Product',
+                                  description:
+                                      item['description'] ??
+                                      'No description available',
+                                  price: PriceFormatter.format(
+                                    item['price'] ?? 0,
+                                  ),
+                                  imageUrl: item['image'],
+                                  onAddToCart: () => _addToCart(item),
+                                  onRemove: () =>
+                                      _removeFromWishlist(item['productId']),
+                                );
+                              },
+                            ),
                     ],
                   ),
                 );
@@ -653,7 +694,10 @@ class WishlistItem extends StatelessWidget {
                     // Delete button
                     if (onRemove != null)
                       IconButton(
-                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.red,
+                        ),
                         onPressed: onRemove,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),

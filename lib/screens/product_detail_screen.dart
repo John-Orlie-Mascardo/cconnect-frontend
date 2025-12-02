@@ -160,6 +160,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         'size': size,
         'qty': 1,
         'productId': widget.product.id, // Add product ID for backend
+        'stock': widget.product.stock,
       });
 
       if (success) {
@@ -537,6 +538,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           ),
                         ),
 
+                        const SizedBox(height: 8),
+
+                        // Stock
+                        Text(
+                          'Stock: ${widget.product.stock}',
+                          style: const TextStyle(
+                            fontFamily: 'kobe11',
+                            fontSize: 14,
+                            color: Colors.white70,
+                          ),
+                        ),
+
                         const SizedBox(height: 20),
 
                         // Size Label
@@ -575,14 +588,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                       : isAvailable
                                       ? Colors.grey[800]
                                       : Colors
-                                            .grey[900], // Darker for unavailable
+                                            .grey[900], // Darker background for unavailable sizes
                                   borderRadius: BorderRadius.circular(4),
                                   border: Border.all(
                                     color: isSelected
                                         ? const Color(0xFFEDFF00)
                                         : isAvailable
                                         ? Colors.grey[700]!
-                                        : Colors.grey[850]!, // Dimmer border
+                                        : Colors
+                                              .grey[850]!, // Dimmer border for unavailable sizes
                                     width: isSelected ? 2 : 1,
                                   ),
                                 ),
@@ -599,11 +613,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                           ? Colors.black
                                           : isAvailable
                                           ? Colors.white
-                                          : Colors.white24, // Dimmed text
+                                          : Colors
+                                                .white24, // Dimmed text for unavailable sizes
                                       decoration: isAvailable
                                           ? null
                                           : TextDecoration
-                                                .lineThrough, // Optional: strike-through
+                                                .lineThrough, // Strike-through for unavailable sizes
                                     ),
                                   ),
                                 ),

@@ -4,6 +4,7 @@ import '../services/cart_manager.dart';
 import '../utils/price_formatter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
+import 'widgets/error_view.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -14,6 +15,7 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   bool _isLoading = true;
+  bool _hasError = false;
   final Set<int> _selectedIndices = {}; // Track which items are selected
 
   // Access cart items from singleton
@@ -26,10 +28,22 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> _loadCart() async {
-    setState(() => _isLoading = true);
-    await CartManager.instance.loadCart();
-    if (mounted) {
-      setState(() => _isLoading = false);
+    try {
+      setState(() {
+        _isLoading = true;
+        _hasError = false;
+      });
+      await CartManager.instance.loadCart();
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
+      }
     }
   }
 
@@ -301,6 +315,12 @@ class _CartScreenState extends State<CartScreen> {
                             ),
                           ),
                         )
+                      : _hasError
+                      ? ErrorView(
+                          onRetry: _loadCart,
+                          message:
+                              'Failed to load cart.\nPlease check your connection.',
+                        )
                       : isEmpty
                       ? _buildEmptyState()
                       : ListView.builder(
@@ -386,6 +406,15 @@ class _CartScreenState extends State<CartScreen> {
                                             fontFamily: 'kobe11',
                                             color: Colors.white70,
                                             fontSize: 14,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Stock: ${item['stock'] ?? 'N/A'}',
+                                          style: const TextStyle(
+                                            fontFamily: 'kobe11',
+                                            color: Colors.white54,
+                                            fontSize: 12,
                                           ),
                                         ),
                                         const SizedBox(height: 12),

@@ -3,6 +3,7 @@ import '../services/order_service.dart';
 import '../models/order.dart';
 import '../utils/price_formatter.dart';
 import 'order_details_screen.dart';
+import 'widgets/error_view.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -52,11 +53,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
               child: CircularProgressIndicator(color: Color(0xFFEDFF00)),
             );
           } else if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error: ${snapshot.error}',
-                style: const TextStyle(color: Colors.red),
-              ),
+            return ErrorView(
+              onRetry: _refreshOrders,
+              message: 'Failed to load orders.\nPlease check your connection.',
             );
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return Center(

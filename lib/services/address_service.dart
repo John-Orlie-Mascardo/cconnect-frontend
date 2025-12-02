@@ -15,13 +15,15 @@ class AddressService {
       final token = await _getToken();
       if (token == null) throw Exception('User not logged in');
 
-      final res = await http.get(
-        Uri.parse('${AuthService.backendBase}/api/user/addresses'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 10));
+      final res = await http
+          .get(
+            Uri.parse('${AuthService.backendBase}/api/user/addresses'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (res.statusCode == 200) {
         final List<dynamic> data = jsonDecode(res.body);
@@ -30,9 +32,8 @@ class AddressService {
         throw Exception('Failed to load addresses: ${res.statusCode}');
       }
     } catch (e) {
-      // Return empty list on error for now, or rethrow
       print('Error fetching addresses: $e');
-      return [];
+      rethrow; // Rethrow to let UI handle the error
     }
   }
 
@@ -42,14 +43,16 @@ class AddressService {
       final token = await _getToken();
       if (token == null) throw Exception('User not logged in');
 
-      final res = await http.post(
-        Uri.parse('${AuthService.backendBase}/api/user/addresses'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(address.toJson()),
-      ).timeout(const Duration(seconds: 10));
+      final res = await http
+          .post(
+            Uri.parse('${AuthService.backendBase}/api/user/addresses'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode(address.toJson()),
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (res.statusCode == 200 || res.statusCode == 201) {
         return Address.fromJson(jsonDecode(res.body));
@@ -68,14 +71,16 @@ class AddressService {
       final token = await _getToken();
       if (token == null) throw Exception('User not logged in');
 
-      final res = await http.put(
-        Uri.parse('${AuthService.backendBase}/api/user/addresses/$id'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(address.toJson()),
-      ).timeout(const Duration(seconds: 10));
+      final res = await http
+          .put(
+            Uri.parse('${AuthService.backendBase}/api/user/addresses/$id'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode(address.toJson()),
+          )
+          .timeout(const Duration(seconds: 10));
 
       return res.statusCode == 200;
     } catch (e) {
@@ -90,13 +95,15 @@ class AddressService {
       final token = await _getToken();
       if (token == null) throw Exception('User not logged in');
 
-      final res = await http.delete(
-        Uri.parse('${AuthService.backendBase}/api/user/addresses/$id'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 10));
+      final res = await http
+          .delete(
+            Uri.parse('${AuthService.backendBase}/api/user/addresses/$id'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
 
       return res.statusCode == 200 || res.statusCode == 204;
     } catch (e) {

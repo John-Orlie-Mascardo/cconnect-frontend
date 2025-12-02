@@ -22,15 +22,21 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
 
   Future<void> _loadProfile() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final result = await UserService.getProfile();
-      
+
       if (result['success'] == true && result['data'] != null) {
         final data = result['data'];
         setState(() {
-          _name = data['name'] ?? FirebaseAuth.instance.currentUser?.displayName ?? 'User';
-          _phone = data['phone'] ?? FirebaseAuth.instance.currentUser?.phoneNumber ?? 'No phone number';
+          _name =
+              data['name'] ??
+              FirebaseAuth.instance.currentUser?.displayName ??
+              'User';
+          _phone =
+              data['phone'] ??
+              FirebaseAuth.instance.currentUser?.phoneNumber ??
+              'No phone number';
         });
       } else {
         // Fallback to Firebase Auth
@@ -45,7 +51,9 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to load profile from server. Using local data.'),
+            content: Text(
+              'Failed to load profile from server. Using local data.',
+            ),
             backgroundColor: Colors.orange,
             duration: const Duration(seconds: 3),
           ),
@@ -87,12 +95,17 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
         );
       }
     } else {
+      String errorMessage = result['error'] ?? 'Failed to update profile';
+      if (errorMessage.contains('SocketException') ||
+          errorMessage.contains('Network is unreachable') ||
+          errorMessage.contains('Connection refused') ||
+          errorMessage.contains('TimeoutException')) {
+        errorMessage = 'No internet connection';
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['error'] ?? 'Failed to update profile'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
         );
       }
     }
@@ -124,18 +137,25 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white54),
+            ),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              if (controller.text.isNotEmpty && controller.text != currentValue) {
+              if (controller.text.isNotEmpty &&
+                  controller.text != currentValue) {
                 _updateProfile(fieldKey, controller.text);
               }
             },
             child: const Text(
               'Save',
-              style: TextStyle(color: Color(0xFFEDFF00), fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Color(0xFFEDFF00),
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -156,7 +176,9 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFFEDFF00)))
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFFEDFF00)),
+            )
           : ListView(
               children: [
                 _buildProfileItem(
