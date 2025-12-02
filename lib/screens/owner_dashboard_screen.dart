@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'me_screen.dart';
 import 'notifications_screen.dart';
-import 'chats_screen.dart';
+import 'admin_conversations_screen.dart';
 import 'products_management_screen.dart';
 import 'manage_orders_screen.dart';
 import 'login_screen.dart';
@@ -236,18 +236,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-            // Navigation Item: Messages
+            // Navigation Item: Messages (Customer Conversations)
             InkWell(
               onTap: () {
                 Navigator.of(context).pop(); // Close drawer before navigating
                 Navigator.of(
                   context,
-                ).push(MaterialPageRoute(builder: (_) => const ChatsScreen()));
+                ).push(MaterialPageRoute(
+                    builder: (_) => const AdminConversationsScreen()));
               },
               child: const ListTile(
                 leading: Icon(Icons.chat_bubble_outline, color: Colors.white),
                 title: Text(
-                  "Messages",
+                  "Customer Messages",
                   style: TextStyle(fontFamily: 'kobe11', color: Colors.white),
                 ),
               ),

@@ -6,6 +6,7 @@ import '../services/cart_manager.dart';
 import '../services/wishlist_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
+import 'realtime_chat_screen.dart';
 
 import '../models/product.dart';
 import '../utils/price_formatter.dart';
@@ -364,11 +365,31 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   /// Handle chat button
   void _openChat() {
-    // TODO: Navigate to chat screen or open chat dialog
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Opening chat...'),
-        duration: Duration(seconds: 1),
+    // Check if user is logged in
+    if (FirebaseAuth.instance.currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please login to chat with the store'),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      // Navigate to login screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+      return;
+    }
+
+    // Navigate to real-time chat screen with product context
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RealtimeChatScreen(
+          productName: widget.product.name,
+          productImage: widget.product.image,
+        ),
       ),
     );
   }
