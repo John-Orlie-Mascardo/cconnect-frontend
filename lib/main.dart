@@ -24,15 +24,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Simple Auth App',
+      title: 'Csoles',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
         primarySwatch: Colors.blue,
         useMaterial3: true,
         scaffoldBackgroundColor: Colors.black,
-        dialogBackgroundColor: Colors.grey[900],
         cardColor: Colors.grey[900],
+        dialogTheme: DialogThemeData(backgroundColor: Colors.grey[900]),
       ),
       initialRoute: '/',
       routes: {
@@ -44,7 +44,8 @@ class MyApp extends StatelessWidget {
       },
       onGenerateRoute: (settings) {
         // Handle deep link for reset password
-        if (settings.name != null && settings.name!.startsWith('/reset-password')) {
+        if (settings.name != null &&
+            settings.name!.startsWith('/reset-password')) {
           final uri = Uri.parse(settings.name!);
           if (uri.queryParameters.containsKey('token') &&
               uri.queryParameters.containsKey('id')) {
